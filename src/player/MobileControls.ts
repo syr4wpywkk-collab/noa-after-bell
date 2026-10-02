@@ -13,10 +13,12 @@ export class MobileControls {
   private joystickKnob = document.querySelector<HTMLElement>("#joystick-knob");
   private lookZone = document.querySelector<HTMLElement>("#look-zone");
   private flashlightButton = document.querySelector<HTMLButtonElement>("#flashlight-button");
+  private interactButton = document.querySelector<HTMLButtonElement>("#interact-button");
 
   constructor(
     private player: PlayerController,
-    private phone: NoaPhone
+    private phone: NoaPhone,
+    private onInteract: () => void,
   ) {
     this.bindJoystick();
     this.bindLook();
@@ -82,7 +84,6 @@ export class MobileControls {
 
     this.lookZone?.addEventListener("pointermove", (event) => {
       if (event.pointerId !== this.lookId || this.phone.isOpen()) return;
-
       const dx = event.clientX - this.lastLookX;
       const dy = event.clientY - this.lastLookY;
       this.lastLookX = event.clientX;
@@ -103,6 +104,11 @@ export class MobileControls {
       event.stopPropagation();
       const on = this.player.toggleFlashlight();
       if (this.flashlightButton) this.flashlightButton.style.opacity = on ? "1" : ".45";
+    });
+
+    this.interactButton?.addEventListener("pointerdown", (event) => {
+      event.stopPropagation();
+      if (this.active && !this.phone.isOpen()) this.onInteract();
     });
   }
 }

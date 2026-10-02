@@ -1,62 +1,36 @@
 # NOA: AFTER BELL
 
-A mobile-first psychological horror game set in a Japanese school after midnight.
+Mobile-first psychological horror game set in a six-floor Japanese integrated middle/high school.
 
-## v0.2 — 3D Rebuild
+## v0.3 — TRUST / FAKER
 
-The `dev/3d-rebuild` branch replaces the original ray-cast prototype with a real Babylon.js 3D scene.
+The game now treats trust as a gameplay system rather than a chat feature.
 
-### First Walk milestone
+- Six-floor 3D school with floor-specific rooms and mobile floor culling
+- NOA read-only GameState context
+- FAKER imitation router with rotating tells
+- Strict NOA response protocol + allow-listed EventValidator
+- HorrorDirector tension model independent from the LLM
+- In-phone free-text NOA chat with latency/signal presentation
+- Deterministic local NOA fallback when `/api/noa` is unavailable
+- Server-only OpenAI Responses API integration via `OPENAI_API_KEY`
+- Four-floor clue puzzle → 6F maintenance terminal → two EXIT endings
+- Authentication phrase that becomes unreliable later
+- Optional Supabase session memory endpoint/schema
+- PWA manifest + service worker
 
-- Real 3D corridor and gym
-- PBR materials
-- Fog, bloom and emissive lighting
-- Flickering fluorescent light
-- Mobile joystick + swipe look
-- Desktop WASD + pointer-lock look
-- Player collisions
-- Flashlight
-- In-game NOA phone UI
-- Procedural ambient hum
-- First supernatural encounter
-- Exit / ending trigger
-- Vite + TypeScript build
-- Vercel Preview deployment
+## Puzzle loop
 
-## Controls
+1. Explore 2F library, 3F science lab, 4F math room, and 5F broadcast room.
+2. Collect four digits in floor order.
+3. Enter the code at the 6F maintenance terminal.
+4. Return to the 1F gym and choose between EXIT A and EXIT B while NOA / FAKER messaging diverges.
 
-### Mobile
-- Left thumb: move
-- Right-side swipe: look
-- 🔦: flashlight
-- NOA: phone
+## Environment variables
 
-### Desktop
-- WASD: move
-- Mouse: look
-- Shift: sprint
-- F: flashlight
+- `OPENAI_API_KEY` — server-only. If missing, the game uses the local deterministic NOA runtime.
+- `OPENAI_MODEL` — optional, defaults to `gpt-6-luna`.
+- `SUPABASE_URL` — optional memory persistence.
+- `SUPABASE_SECRET_KEY` — optional server-only Supabase secret key. Legacy `SUPABASE_SERVICE_ROLE_KEY` is accepted as a fallback.
 
-## Branches
-
-- `main` — original lightweight prototype
-- `dev/3d-rebuild` — v0.2 real-3D rebuild
-
-## Stack
-
-- Babylon.js
-- TypeScript
-- Vite
-- GitHub
-- Vercel
-
-## Next milestones
-
-1. Better school geometry and classrooms
-2. Proper GLB assets and PBR textures
-3. Positional 3D audio
-4. Multiple anomaly types
-5. Dynamic NOA state machine
-6. Graphics presets for mobile
-7. Save / settings support
-8. More endings
+Never expose server secrets through Vite `VITE_*` variables.

@@ -1,0 +1,10 @@
+{
+  "name": "NOA: AFTER BELL",
+  "short_name": "AFTER BELL",
+  "description": "Mobile-first psychological horror game about trusting an AI navigator.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#020406",
+  "theme_color": "#020406",
+  "orientation": "landscape"
+}

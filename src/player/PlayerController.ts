@@ -5,8 +5,9 @@ import {
   Scene,
   SpotLight,
   UniversalCamera,
-  Vector3
+  Vector3,
 } from "@babylonjs/core";
+import { floorBaseY, type FloorId } from "../game/WorldLayout";
 
 export class PlayerController {
   readonly camera: UniversalCamera;
@@ -20,16 +21,19 @@ export class PlayerController {
   private keys = new Set<string>();
   private flashlight: SpotLight;
   private flashlightOn = true;
+  private floor: FloorId = 1;
+  private stamina = 100;
+  private moving = false;
 
   constructor(private scene: Scene, private canvas: HTMLCanvasElement) {
     this.collider = MeshBuilder.CreateBox("player-collider", {
       width: 0.55,
       height: 1.8,
-      depth: 0.55
+      depth: 0.55,
     }, scene);
     this.collider.visibility = 0;
     this.collider.isPickable = false;
-    this.collider.checkCollisions = false;
+    this.collider.checkCollisions = true;
     this.collider.ellipsoid = new Vector3(0.28, 0.86, 0.28);
     this.collider.ellipsoidOffset = new Vector3(0, 0, 0);
 
@@ -46,7 +50,7 @@ export class PlayerController {
       new Vector3(0, 0, 1),
       Math.PI / 2.65,
       18,
-      scene
+      scene,
     );
     this.flashlight.parent = this.camera;
     this.flashlight.diffuse = new Color3(0.88, 0.93, 0.90);
@@ -58,15 +62,29 @@ export class PlayerController {
     this.bindDesktopLook();
   }
 
-  spawn(position: Vector3): void {
+  spawn(position: Vector3, floor: FloorId = 1): void {
+    this.floor = floor;
     this.collider.position.copyFrom(position);
+    this.collider.position.y = floorBaseY(floor) + 0.9;
     this.yaw = 0;
     this.pitch = 0;
     this.syncRotation();
   }
 
+  setFloor(floor: FloorId, x = 0, z = 4.2): void {
+    this.floor = floor;
+    this.collider.position.set(x, floorBaseY(floor) + 0.9, z);
+    this.analogX = 0;
+    this.analogY = 0;
+  }
+
+  getFloor(): FloorId {
+    return this.floor;
+  }
+
   setActive(active: boolean): void {
     this.active = active;
+    if (!active) this.setMoveVector(0, 0);
   }
 
   setMoveVector(x: number, y: number): void {
@@ -88,12 +106,27 @@ export class PlayerController {
     return this.flashlightOn;
   }
 
+  isFlashlightOn(): boolean {
+    return this.flashlightOn;
+  }
+
   getPosition(): Vector3 {
     return this.collider.position;
   }
 
+  getStamina(): number {
+    return this.stamina;
+  }
+
+  isMoving(): boolean {
+    return this.moving;
+  }
+
   update(dt: number): void {
-    if (!this.active) return;
+    if (!this.active) {
+      this.moving = false;
+      return;
+    }
 
     let forward = this.analogY;
     let strafe = this.analogX;
@@ -109,20 +142,22 @@ export class PlayerController {
       strafe /= magnitude;
     }
 
-    const sprinting = this.keys.has("ShiftLeft") || this.keys.has("ShiftRight");
+    const wantsSprint = this.keys.has("ShiftLeft") || this.keys.has("ShiftRight");
+    const sprinting = wantsSprint && this.stamina > 2 && magnitude > 0.2;
     const speed = sprinting ? 4.55 : 2.85;
+    this.stamina = sprinting
+      ? Math.max(0, this.stamina - dt * 11)
+      : Math.min(100, this.stamina + dt * 6.5);
 
     const forwardVector = new Vector3(Math.sin(this.yaw), 0, Math.cos(this.yaw));
     const rightVector = new Vector3(Math.cos(this.yaw), 0, -Math.sin(this.yaw));
     const displacement = forwardVector.scale(forward * speed * dt)
       .addInPlace(rightVector.scale(strafe * speed * dt));
 
-    if (displacement.lengthSquared() > 0.000001) {
-      this.collider.moveWithCollisions(displacement);
-    }
+    this.moving = displacement.lengthSquared() > 0.00001;
+    if (this.moving) this.collider.moveWithCollisions(displacement);
 
-    // No jumping in this prototype; keep the camera at a stable human eye level.
-    this.collider.position.y = 0.9;
+    this.collider.position.y = floorBaseY(this.floor) + 0.9;
   }
 
   private syncRotation(): void {
@@ -143,12 +178,10 @@ export class PlayerController {
 
   private bindDesktopLook(): void {
     if (!window.matchMedia("(pointer: fine)").matches) return;
-
     this.canvas.addEventListener("pointerdown", () => {
       if (!this.active) return;
       this.canvas.requestPointerLock?.();
     });
-
     document.addEventListener("mousemove", (event) => {
       if (document.pointerLockElement !== this.canvas) return;
       this.look(event.movementX, event.movementY);
