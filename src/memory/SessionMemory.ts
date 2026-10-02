@@ -23,15 +23,15 @@ export class SessionMemory {
     return "プレイヤーは探索を優先し、必要な時だけNOAを確認している。";
   }
 
-  async persist(snapshot: GameSnapshot): Promise<void> {
-    if (this.messages.length === this.lastPersisted) return;
+  async persist(snapshot: GameSnapshot, ending: "A" | "B" | null = null): Promise<void> {
+    if (!ending && this.messages.length === this.lastPersisted) return;
     this.lastPersisted = this.messages.length;
     const payload = {
       session: {
         id: snapshot.sessionId,
         chapter: snapshot.chapter,
         noa_state: snapshot.noa,
-        ending: null,
+        ending,
       },
       messages: this.recent(8),
       summary: this.summary(),
