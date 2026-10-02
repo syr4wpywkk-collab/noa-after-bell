@@ -1,0 +1,108 @@
+import { PlayerController } from "./PlayerController";
+import { NoaPhone } from "../noa/NoaPhone";
+
+export class MobileControls {
+  private active = false;
+  private joystickId: number | null = null;
+  private lookId: number | null = null;
+  private lastLookX = 0;
+  private lastLookY = 0;
+
+  private joystickZone = document.querySelector<HTMLElement>("#joystick-zone");
+  private joystickBase = document.querySelector<HTMLElement>("#joystick-base");
+  private joystickKnob = document.querySelector<HTMLElement>("#joystick-knob");
+  private lookZone = document.querySelector<HTMLElement>("#look-zone");
+  private flashlightButton = document.querySelector<HTMLButtonElement>("#flashlight-button");
+
+  constructor(
+    private player: PlayerController,
+    private phone: NoaPhone
+  ) {
+    this.bindJoystick();
+    this.bindLook();
+    this.bindButtons();
+  }
+
+  setActive(active: boolean): void {
+    this.active = active;
+    if (!active) this.player.setMoveVector(0, 0);
+  }
+
+  private bindJoystick(): void {
+    this.joystickZone?.addEventListener("pointerdown", (event) => {
+      if (!this.active || this.joystickId !== null || this.phone.isOpen()) return;
+      this.joystickId = event.pointerId;
+      this.joystickZone?.setPointerCapture(event.pointerId);
+      this.updateJoystick(event.clientX, event.clientY);
+    });
+
+    this.joystickZone?.addEventListener("pointermove", (event) => {
+      if (event.pointerId !== this.joystickId) return;
+      this.updateJoystick(event.clientX, event.clientY);
+    });
+
+    const release = (event: PointerEvent) => {
+      if (event.pointerId !== this.joystickId) return;
+      this.joystickId = null;
+      this.player.setMoveVector(0, 0);
+      if (this.joystickKnob) this.joystickKnob.style.transform = "translate(0, 0)";
+    };
+
+    this.joystickZone?.addEventListener("pointerup", release);
+    this.joystickZone?.addEventListener("pointercancel", release);
+  }
+
+  private updateJoystick(x: number, y: number): void {
+    if (!this.joystickBase || !this.joystickKnob) return;
+    const rect = this.joystickBase.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const max = rect.width * 0.34;
+
+    let dx = x - cx;
+    let dy = y - cy;
+    const length = Math.hypot(dx, dy);
+    if (length > max) {
+      dx = dx / length * max;
+      dy = dy / length * max;
+    }
+
+    this.joystickKnob.style.transform = `translate(${dx}px, ${dy}px)`;
+    this.player.setMoveVector(dx / max, -dy / max);
+  }
+
+  private bindLook(): void {
+    this.lookZone?.addEventListener("pointerdown", (event) => {
+      if (!this.active || this.lookId !== null || this.phone.isOpen()) return;
+      this.lookId = event.pointerId;
+      this.lastLookX = event.clientX;
+      this.lastLookY = event.clientY;
+      this.lookZone?.setPointerCapture(event.pointerId);
+    });
+
+    this.lookZone?.addEventListener("pointermove", (event) => {
+      if (event.pointerId !== this.lookId || this.phone.isOpen()) return;
+
+      const dx = event.clientX - this.lastLookX;
+      const dy = event.clientY - this.lastLookY;
+      this.lastLookX = event.clientX;
+      this.lastLookY = event.clientY;
+      this.player.look(dx, dy);
+    });
+
+    const release = (event: PointerEvent) => {
+      if (event.pointerId === this.lookId) this.lookId = null;
+    };
+
+    this.lookZone?.addEventListener("pointerup", release);
+    this.lookZone?.addEventListener("pointercancel", release);
+  }
+
+  private bindButtons(): void {
+    this.flashlightButton?.addEventListener("pointerdown", (event) => {
+      event.stopPropagation();
+      const on = this.player.toggleFlashlight();
+      if (this.flashlightButton) this.flashlightButton.style.opacity = on ? "1" : ".45";
+    });
+  }
+}
