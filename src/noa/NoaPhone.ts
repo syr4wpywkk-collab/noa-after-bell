@@ -81,15 +81,16 @@ export class NoaPhone {
     if (show && this.feed) this.feed.scrollTop = this.feed.scrollHeight;
   }
 
-  setSignal(state: "sending" | "unstable" | "connected" | "offline"): void {
+  setSignal(state: "sending" | "unstable" | "connected" | "offline" | "disconnected"): void {
     const labels = {
       sending: "SIGNAL 82% · ••",
       unstable: "SIGNAL UNSTABLE · •••",
       connected: "CONNECTED",
       offline: "LOCAL FALLBACK",
+      disconnected: "NO SIGNAL",
     } as const;
     this.setSignalText(labels[state]);
-    this.signal?.classList.toggle("unstable", state === "unstable");
+    this.signal?.classList.toggle("unstable", state === "unstable" || state === "disconnected");
   }
 
   setClock(gameTimeMs: number, minuteOffset = 0): void {
