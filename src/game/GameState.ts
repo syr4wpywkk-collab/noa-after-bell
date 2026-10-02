@@ -9,6 +9,7 @@ export type StoryFlags = {
   exitsKnown: boolean;
   hintUnlocked: boolean;
   clockSeen: boolean;
+  noaDisconnected: boolean;
 };
 
 export type NoaHiddenState = {
@@ -80,6 +81,7 @@ export class GameState {
     exitsKnown: false,
     hintUnlocked: false,
     clockSeen: false,
+    noaDisconnected: false,
   };
   private noa: NoaHiddenState = {
     trust: 0.82,
