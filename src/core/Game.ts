@@ -45,6 +45,8 @@ export class Game {
   private currentInteraction: WorldInteraction | null = null;
   private lastInteractionAt = 0;
   private fakeFollowupTimer?: number;
+  private doubtSequenceStarted = false;
+  private disconnectSequenceStarted = false;
   private started = false;
 
   constructor(private canvas: HTMLCanvasElement) {
@@ -107,6 +109,8 @@ export class Game {
     });
 
     this.updateChapter();
+    this.maybeTriggerDoubtSequence();
+    this.maybeTriggerDisconnectSequence();
     let snapshot = this.state.snapshot();
     const horror = this.director.update(dt, snapshot);
     this.state.setHorror({
@@ -195,6 +199,14 @@ export class Game {
     this.phone.push("YOU", text, { user: true });
     this.memory.record("user", text, before.gameTimeMs);
 
+    if (before.story.noaDisconnected) {
+      this.phone.showTyping(false);
+      this.phone.setSignal("disconnected");
+      this.phone.notify("返事がない。", 1400);
+      void this.memory.persist(this.state.snapshot());
+      return;
+    }
+
     if (!before.story.authenticationIntroduced) {
       this.state.patchStory({ authenticationIntroduced: true });
     }
@@ -258,6 +270,61 @@ export class Game {
       this.state.patchNoa({ trust: 0.72, mode: "uncertain" });
       this.state.setObjective("NOAと表示の違和感を確認しながら進む");
     }, 3400);
+  }
+
+  private maybeTriggerDoubtSequence(): void {
+    const snapshot = this.state.snapshot();
+    if (this.doubtSequenceStarted || snapshot.chapter !== 4 || !snapshot.story.terminalUnlocked) return;
+
+    this.doubtSequenceStarted = true;
+    window.setTimeout(() => {
+      if (!this.started) return;
+      this.phone.push("NOA", "6F廊下は安全。南階段まで、そのまま進んで。", { mood: "calm" });
+
+      window.setTimeout(() => {
+        this.director.noteScare();
+        this.school.flickerLights(this.player.getFloor());
+        this.audio.footstepsFar();
+        this.phone.notify("すぐ後ろで、足音。", 1700);
+        this.state.patchNoa({
+          trust: 0.64,
+          knowledge: 0.58,
+          memoryIntegrity: 0.70,
+          mode: "uncertain",
+        });
+
+        window.setTimeout(() => {
+          this.phone.push("NOA", "ごめん。……地図が変わってる。\n\n今の『安全』は撤回する。", { mood: "urgent" });
+          this.state.setObjective("NOAの情報も照合しながら、1Fへ戻る");
+        }, 900);
+      }, 2200);
+    }, 900);
+  }
+
+  private maybeTriggerDisconnectSequence(): void {
+    const snapshot = this.state.snapshot();
+    if (this.disconnectSequenceStarted || snapshot.chapter !== 5 || !snapshot.story.terminalUnlocked) return;
+
+    this.disconnectSequenceStarted = true;
+    window.setTimeout(() => {
+      this.state.patchStory({ noaDisconnected: true });
+      this.state.patchNoa({
+        mode: "distorted",
+        memoryIntegrity: Math.max(0.48, this.state.snapshot().noa.memoryIntegrity - 0.16),
+      });
+      this.phone.showTyping(false);
+      this.phone.setSignal("disconnected");
+      this.phone.notify("NOAとの接続が切断されました。", 2800);
+      this.state.setObjective("NOAなしで、体育館の非常口まで進む");
+
+      window.setTimeout(() => {
+        this.state.patchStory({ noaDisconnected: false });
+        this.state.patchNoa({ mode: "uncertain" });
+        this.phone.setSignal("connected");
+        this.phone.push("NOA", "戻った。", { mood: "uncertain" });
+        this.phone.notify("SIGNAL RESTORED", 1600);
+      }, 15_000);
+    }, 2400);
   }
 
   private openTerminal(): void {
@@ -341,6 +408,7 @@ export class Game {
         : "非常口Bを押した。<br>扉の向こうで、同じ通知音が二度鳴った。<br><br>どちらが先だったか思い出せない。";
     }
     screen?.classList.remove("hidden");
+    void this.memory.persist(this.state.snapshot(), ending);
   }
 
   private createScene(): Scene {
