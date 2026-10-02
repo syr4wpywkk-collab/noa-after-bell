@@ -161,3 +161,13 @@ function castAndDraw(){
   ctx.restore();
   ctx.save();
   let dark=flashlight ? (inGym?.35:.68) : (inGym?.62:.88);
+  let vg=ctx.createRadialGradient(W/2,H*.53,flashlight?16:5,W/2,H*.53,flashlight?185:95);
+  vg.addColorStop(0,`rgba(0,0,0,${flashlight?.03:.28})`);
+  vg.addColorStop(.5,`rgba(0,0,0,${flashlight?.20:.60})`);
+  vg.addColorStop(1,`rgba(0,0,0,${dark})`);
+  ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);
+  // film grain
+  ctx.globalAlpha=.08;
+  for(let i=0;i<90;i++){const v=Math.random()*255|0;ctx.fillStyle=`rgb(${v},${v},${v})`;ctx.fillRect(Math.random()*W,Math.random()*H,1,1);}
+  ctx.restore();
+}
