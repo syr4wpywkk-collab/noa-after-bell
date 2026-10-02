@@ -219,7 +219,8 @@ export class Game {
 
     const visual = response.source === "faker" ? this.visualForFaker(this.faker.state.nextClue()) : { mood: response.mood };
     const author = response.source === "faker" && visual.author ? visual.author : "NOA";
-    this.phone.push(author, response.message, visual);
+    const streamDelay = response.source === "faker" && this.faker.state.imitationLevel < 0.72 ? 7 : 18;
+    await this.phone.pushStreamed(author, response.message, visual, streamDelay);
     this.memory.record("assistant", response.message, this.state.snapshot().gameTimeMs);
 
     const event = this.validator.validate(response, this.state.snapshot());

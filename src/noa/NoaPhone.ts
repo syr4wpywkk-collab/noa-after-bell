@@ -54,29 +54,26 @@ export class NoaPhone {
   }
 
   push(author: string, message: string, options: MessageOptions = {}): void {
-    if (!this.feed) return;
-    const block = document.createElement("div");
-    block.className = "message";
-    if (options.system) block.classList.add("system-message");
-    if (options.user) block.classList.add("user-message");
-    if (options.glitch) block.classList.add("glitch-message");
-    if (options.mood) block.dataset.mood = options.mood;
-
-    const meta = document.createElement("div");
-    meta.className = "message-meta";
-    const label = document.createElement("strong");
-    label.textContent = author;
-    const timestamp = document.createElement("time");
-    timestamp.textContent = this.displayTime(options.minuteOffset ?? 0);
-    meta.append(label, timestamp);
-
-    const body = document.createElement("span");
+    const body = this.createMessage(author, options);
+    if (!body) return;
     body.textContent = message;
-    block.append(meta, body);
-    this.feed.append(block);
-    this.feed.scrollTop = this.feed.scrollHeight;
+    if (this.feed) this.feed.scrollTop = this.feed.scrollHeight;
+  }
 
-    if (options.signalOverride) this.setSignalText(options.signalOverride);
+  async pushStreamed(
+    author: string,
+    message: string,
+    options: MessageOptions = {},
+    charDelayMs = 18,
+  ): Promise<void> {
+    const body = this.createMessage(author, options);
+    if (!body) return;
+    const delay = Math.max(4, Math.min(45, charDelayMs));
+    for (const char of Array.from(message)) {
+      body.textContent += char;
+      if (this.feed) this.feed.scrollTop = this.feed.scrollHeight;
+      await new Promise((resolve) => window.setTimeout(resolve, delay));
+    }
   }
 
   showTyping(show: boolean): void {
@@ -107,6 +104,31 @@ export class NoaPhone {
     this.toast.classList.add("show");
     window.clearTimeout(this.toastTimer);
     this.toastTimer = window.setTimeout(() => this.toast?.classList.remove("show"), duration);
+  }
+
+  private createMessage(author: string, options: MessageOptions): HTMLSpanElement | null {
+    if (!this.feed) return null;
+    const block = document.createElement("div");
+    block.className = "message";
+    if (options.system) block.classList.add("system-message");
+    if (options.user) block.classList.add("user-message");
+    if (options.glitch) block.classList.add("glitch-message");
+    if (options.mood) block.dataset.mood = options.mood;
+
+    const meta = document.createElement("div");
+    meta.className = "message-meta";
+    const label = document.createElement("strong");
+    label.textContent = author;
+    const timestamp = document.createElement("time");
+    timestamp.textContent = this.displayTime(options.minuteOffset ?? 0);
+    meta.append(label, timestamp);
+
+    const body = document.createElement("span");
+    block.append(meta, body);
+    this.feed.append(block);
+    this.feed.scrollTop = this.feed.scrollHeight;
+    if (options.signalOverride) this.setSignalText(options.signalOverride);
+    return body;
   }
 
   private setSignalText(text: string): void {

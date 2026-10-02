@@ -1,10 +1,9 @@
 const RESPONSE_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["message", "source", "mood", "event", "delayMs", "confidence"],
+  required: ["message", "mood", "event", "delayMs", "confidence"],
   properties: {
     message: { type: "string", minLength: 1, maxLength: 420 },
-    source: { type: "string", enum: ["noa", "faker", "unknown"] },
     mood: { type: "string", enum: ["calm", "uncertain", "urgent", "distorted"] },
     event: { type: "string", enum: ["none", "flicker_lights", "radio_noise", "door_sound", "footsteps_far", "objective_hint"] },
     delayMs: { type: "integer", minimum: 0, maximum: 3500 },
@@ -94,7 +93,7 @@ export default async function handler(req, res) {
 
   const context = safeContext(body);
   const actor = context.actor;
-  const model = process.env.OPENAI_MODEL || "gpt-6-luna";
+  const model = process.env.OPENAI_MODEL || "gpt-5.6-luna";
 
   try {
     const response = await fetch("https://api.openai.com/v1/responses", {
@@ -108,6 +107,7 @@ export default async function handler(req, res) {
         instructions: instructionsFor(actor),
         input: JSON.stringify(context),
         max_output_tokens: 220,
+        reasoning: { effort: "none" },
         text: {
           format: {
             type: "json_schema",
@@ -128,7 +128,6 @@ export default async function handler(req, res) {
     const data = await response.json();
     const output = extractOutputText(data);
     const parsed = JSON.parse(output);
-    parsed.source = actor;
     return res.status(200).json(parsed);
   } catch (error) {
     console.error("NOA API failure", error);
