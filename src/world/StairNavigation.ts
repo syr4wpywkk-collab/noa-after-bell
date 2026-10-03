@@ -1,18 +1,20 @@
 export type StairSide = "north" | "south";
 export type StairDirection = "up" | "down";
 
+export const STAIR_INTERACTION_RADIUS = 2.6;
+
 export const STAIR_LANES = {
   north: {
     z: 4.45,
     arrivalZ: 5.0,
-    upX: -1.55,
-    downX: 1.55,
+    upX: -1.0,
+    downX: 1.0,
   },
   south: {
     z: 35.55,
     arrivalZ: 35.0,
-    upX: 1.55,
-    downX: -1.55,
+    upX: 1.0,
+    downX: -1.0,
   },
 } as const;
 
