@@ -1,0 +1,78 @@
+name: Blender Asset Pipeline
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "tools/blender/**"
+      - ".github/workflows/blender-assets.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "tools/blender/**"
+      - ".github/workflows/blender-assets.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: blender-assets-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-school-shell:
+    name: Build school GLB
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Blender
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y blender
+          blender --version
+
+      - name: Generate school assets
+        run: |
+          mkdir -p build/blender
+          blender --background --factory-startup \
+            --python tools/blender/build_school.py -- \
+            --output-dir build/blender
+
+      - name: Validate exported GLB
+        run: |
+          blender --background --factory-startup \
+            --python tools/blender/validate_glb.py -- \
+            build/blender/school_shell.glb \
+            --min-meshes 100 \
+            --min-materials 6
+
+      - name: Write checksums
+        run: |
+          (
+            cd build/blender
+            sha256sum school_shell.glb school_shell.blend > SHA256SUMS.txt
+          )
+
+      - name: Show generated files
+        run: |
+          ls -lh build/blender
+          cat build/blender/school_shell.manifest.json
+          cat build/blender/SHA256SUMS.txt
+
+      - name: Upload Blender artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: noa-school-blender-assets-${{ github.sha }}
+          path: |
+            build/blender/school_shell.glb
+            build/blender/school_shell.blend
+            build/blender/school_shell.manifest.json
+            build/blender/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 6
