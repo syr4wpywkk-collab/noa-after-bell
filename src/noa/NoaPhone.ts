@@ -22,6 +22,7 @@ export class NoaPhone {
   private open = false;
   private toastTimer?: number;
   private submitHandler?: (text: string) => void | Promise<void>;
+  private mode: "danger" | "normal" | "safe" = "normal";
 
   constructor() {
     this.button?.addEventListener("pointerdown", (event) => {
@@ -36,6 +37,30 @@ export class NoaPhone {
       if (this.input) this.input.value = "";
       void this.submitHandler(text);
     });
+    this.buildQuickAsk();
+  }
+
+  setMode(mode: "danger" | "normal" | "safe"): void {
+    if (mode === this.mode) return;
+    this.mode = mode;
+    this.root?.setAttribute("data-mode", mode);
+    if (this.input) {
+      this.input.disabled = mode === "danger";
+      this.input.placeholder = mode === "danger" ? "追跡中：クイック質問のみ" : mode === "safe" ? "NOAと話す…" : "短く聞く…";
+    }
+  }
+
+  private buildQuickAsk(): void {
+    if (!this.root || !this.form) return;
+    const quick = document.createElement("div");
+    quick.id = "quick-ask";
+    for (const text of ["安全？", "どっち？", "今の音なに？", "NOA？", "現在地", "出口は？"]) {
+      const button = document.createElement("button");
+      button.type = "button"; button.textContent = text;
+      button.addEventListener("click", () => { if (this.submitHandler) void this.submitHandler(text); });
+      quick.append(button);
+    }
+    this.form.before(quick);
   }
 
   setSubmitHandler(handler: (text: string) => void | Promise<void>): void {

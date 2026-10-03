@@ -5,7 +5,7 @@ const RESPONSE_SCHEMA = {
   properties: {
     message: { type: "string", minLength: 1, maxLength: 420 },
     mood: { type: "string", enum: ["calm", "uncertain", "urgent", "distorted"] },
-    event: { type: "string", enum: ["none", "flicker_lights", "radio_noise", "door_sound", "footsteps_far", "objective_hint"] },
+    event: { type: "string", enum: ["none", "flicker_lights", "radio_noise", "door_sound", "footsteps_far", "objective_hint", "phone_notification_noise", "faker_corrupt_photo"] },
     delayMs: { type: "integer", minimum: 0, maximum: 3500 },
     confidence: { type: "number", minimum: 0, maximum: 1 },
   },

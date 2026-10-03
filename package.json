@@ -1,13 +1,14 @@
 {
   "name": "noa-after-bell",
   "private": true,
-  "version": "0.3.0",
+  "version": "0.4.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "vite build --ssr src/tests/run.ts --outDir .test-dist && node .test-dist/run.js"
   },
   "dependencies": {
     "@babylonjs/core": "^8.0.0"

@@ -10,6 +10,9 @@ Mobile-first psychological horror game. Primary target: iPhone Safari / PWA.
 - `src/faker` — imitation state and actor routing
 - `src/director` — horror pacing and AI event validation
 - `src/puzzles` — deterministic puzzle logic
+- `src/threat` — signal-driven stealth state machine
+- `src/camera` / `src/ui` — IndexedDB evidence photos and DOM overlays
+- `src/mat` / `src/endings` — fictional alternate route and deterministic endings
 - `src/memory` — bounded conversation memory and optional server persistence
 - `api` — server-only LLM and memory endpoints
 

@@ -5,6 +5,8 @@ export const NOA_EVENTS = [
   "door_sound",
   "footsteps_far",
   "objective_hint",
+  "phone_notification_noise",
+  "faker_corrupt_photo",
 ] as const;
 
 export type NoaEvent = typeof NOA_EVENTS[number];

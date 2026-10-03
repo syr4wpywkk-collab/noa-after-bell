@@ -75,6 +75,13 @@ export function localNoaResponse(
     };
   }
 
+  if (/帰りたい|数学.*だる|お腹すいた|疲れた/.test(userText)) {
+    const replies = /お腹すいた/.test(userText)
+      ? "うん。帰ったら何か食べよう。今は足音だけ、少し気にして。"
+      : /数学/.test(userText) ? "それは分かる。黒板を見るのは今夜で最後にしよう。" : "帰ろう。そのために私もいる。急がなくていい、周りを見て。";
+    return { message: replies, source: actor, mood: "calm", event: "none", delayMs: 360, confidence: 0.86 };
+  }
+
   if (actor === "faker") {
     const truthFirst = snapshot.floor < 6
       ? `${snapshot.floor}Fにいる。それは合ってる。南階段を使って上へ。`

@@ -203,13 +203,13 @@ export class School6F {
       this.interactions.push({ id: `stairs_north_up_${floor}`, kind: "stairs_up", floor, x: 0, y: floorBaseY(floor) + 0.9, z: 3.4, label: "上の階へ" });
     }
     if (floor > 1) {
-      this.interactions.push({ id: `stairs_north_down_${floor}`, kind: "stairs_down", floor, x: 0, y: floorBaseY(floor) + 0.9, z: 3.4, label: "下の階へ" });
+      this.interactions.push({ id: `stairs_north_down_${floor}`, kind: "stairs_down", floor, x: 0, y: floorBaseY(floor) + 0.9, z: 1.4, label: "下の階へ" });
     }
     if (floor < 6) {
       this.interactions.push({ id: `stairs_south_up_${floor}`, kind: "stairs_up", floor, x: 0, y: floorBaseY(floor) + 0.9, z: 36.6, label: "上の階へ" });
     }
     if (floor > 1) {
-      this.interactions.push({ id: `stairs_south_down_${floor}`, kind: "stairs_down", floor, x: 0, y: floorBaseY(floor) + 0.9, z: 36.6, label: "下の階へ" });
+      this.interactions.push({ id: `stairs_south_down_${floor}`, kind: "stairs_down", floor, x: 0, y: floorBaseY(floor) + 0.9, z: 38.6, label: "下の階へ" });
     }
   }
 
@@ -296,6 +296,7 @@ export class School6F {
     clock.material = clockMat;
     clock.parent = root;
     this.interactions.push({ id: "clock_6f", kind: "clock", floor: 6, x: -2.45, y: floorBaseY(6) + 0.9, z: 31.6, label: "止まった時計を見る" });
+    this.interactions.push({ id: "west_landing_6f", kind: "dive_route", floor: 6, x: 0, y: floorBaseY(6) + 0.9, z: 38.4, label: "西非常階段から中庭を見る" });
   }
 
   private buildGym(root: TransformNode): void {
@@ -347,6 +348,9 @@ export class School6F {
 
     this.interactions.push({ id: "exit_a", kind: "exit_a", floor: 1, x: -3.3, y: 0.9, z: 65.7, label: "非常口 A" });
     this.interactions.push({ id: "exit_b", kind: "exit_b", floor: 1, x: 3.3, y: 0.9, z: 65.7, label: "非常口 B" });
+    this.box(root, "mat-storage", new Vector3(2.8, 1.2, 1.0), new Vector3(-7.2, 0.6, 43), this.pbr("mat-blue", new Color3(0.03, 0.16, 0.42), 0.8), true);
+    this.interactions.push({ id: "mat_storage_1f", kind: "mat_pickup", floor: 1, x: -6.4, y: 0.9, z: 43, label: "体育マットを運ぶ" });
+    this.interactions.push({ id: "courtyard_1f", kind: "mat_place", floor: 1, x: 7.2, y: 0.9, z: 45, label: "中庭にマットを置く" });
   }
 
   private buildLockers(root: TransformNode, startZ: number, count: number): void {

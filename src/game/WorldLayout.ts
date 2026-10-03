@@ -11,12 +11,12 @@ export type FloorDefinition = {
 };
 
 export const FLOORS: readonly FloorDefinition[] = [
-  { floor: 1, label: "1F", department: "共用・中等部", specialRoom: "保健室", atmosphere: "玄関と体育館連絡口" },
-  { floor: 2, label: "2F", department: "中等部", specialRoom: "図書室", atmosphere: "静かな普通教室階" },
-  { floor: 3, label: "3F", department: "理科系", specialRoom: "理科実験室", atmosphere: "薬品棚と実験台" },
-  { floor: 4, label: "4F", department: "高等部", specialRoom: "数学講義室", atmosphere: "高校教室と講義室" },
-  { floor: 5, label: "5F", department: "芸術・放送", specialRoom: "放送室", atmosphere: "音楽室と放送設備" },
-  { floor: 6, label: "6F", department: "特別教室", specialRoom: "資料室", atmosphere: "進路資料室と屋上前" },
+  { floor: 1, label: "1F", department: "共用・体育", specialRoom: "体育職員室・マット庫", atmosphere: "正面玄関・中庭・電気室・体育館" },
+  { floor: 2, label: "2F", department: "教職員", specialRoom: "職員室・放送室", atmosphere: "印刷室・監視モニター" },
+  { floor: 3, label: "3F", department: "情報・生徒指導", specialRoom: "コンピュータ室", atmosphere: "ガラス連絡廊下" },
+  { floor: 4, label: "4F", department: "理科", specialRoom: "化学実験室", atmosphere: "物理室・標本室" },
+  { floor: 5, label: "5F", department: "進路・自習", specialRoom: "個別自習ブース", atmosphere: "進路資料・安全区画" },
+  { floor: 6, label: "6F", department: "芸術・天文", specialRoom: "資料室・保守端末", atmosphere: "音楽室・美術室・西非常階段" },
 ] as const;
 
 export function floorBaseY(floor: FloorId): number {
