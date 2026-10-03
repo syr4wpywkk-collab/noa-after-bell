@@ -21,7 +21,7 @@ from pathlib import Path
 import bpy
 
 
-GENERATOR_VERSION = "0.1.0"
+GENERATOR_VERSION = "0.2.0"
 FLOOR_HEIGHT = 4.15
 FLOOR_COUNT = 6
 CORRIDOR_LENGTH = 40.0
@@ -143,6 +143,28 @@ def add_empty(name: str, z: float) -> bpy.types.Object:
     obj.location = (0.0, 0.0, z)
     bpy.context.scene.collection.objects.link(obj)
     return obj
+
+
+def merge_floor_meshes(root: bpy.types.Object) -> None:
+    """Merge static meshes by material to keep mobile draw calls low."""
+    groups: dict[str, list[bpy.types.Object]] = {}
+    for child in list(root.children):
+        if child.type != "MESH":
+            continue
+        material_name = child.data.materials[0].name if child.data.materials else "__none__"
+        groups.setdefault(material_name, []).append(child)
+
+    for material_name, objects in groups.items():
+        if len(objects) < 2:
+            continue
+        bpy.ops.object.select_all(action="DESELECT")
+        for obj in objects:
+            obj.select_set(True)
+        active = objects[0]
+        bpy.context.view_layer.objects.active = active
+        bpy.ops.object.join()
+        active.name = f"{root.name}_{material_name}"
+        active.parent = root
 
 
 def add_door_frame(
@@ -385,14 +407,30 @@ def build_school() -> dict[str, int]:
             bevel=0.008,
             parent=root,
         )
-        add_box(
-            f"F{floor_index}_left_wall",
-            (-CORRIDOR_WIDTH / 2, CORRIDOR_LENGTH / 2, floor_z + 1.55),
-            (0.18, CORRIDOR_LENGTH, 3.20),
-            wall,
-            bevel=0.014,
-            parent=root,
-        )
+        door_centers = (7.0, 13.5, 20.0, 26.5, 33.0)
+        door_half = 0.76
+        cursor = 0.0
+        for wall_index, door_y in enumerate(door_centers):
+            start = door_y - door_half
+            if start > cursor:
+                add_box(
+                    f"F{floor_index}_left_wall_{wall_index}",
+                    (-CORRIDOR_WIDTH / 2, (start + cursor) / 2, floor_z + 1.55),
+                    (0.18, start - cursor, 3.20),
+                    wall,
+                    bevel=0.014,
+                    parent=root,
+                )
+            cursor = door_y + door_half
+        if cursor < CORRIDOR_LENGTH:
+            add_box(
+                f"F{floor_index}_left_wall_end",
+                (-CORRIDOR_WIDTH / 2, (CORRIDOR_LENGTH + cursor) / 2, floor_z + 1.55),
+                (0.18, CORRIDOR_LENGTH - cursor, 3.20),
+                wall,
+                bevel=0.014,
+                parent=root,
+            )
         add_box(
             f"F{floor_index}_right_wall",
             (CORRIDOR_WIDTH / 2, CORRIDOR_LENGTH / 2, floor_z + 1.55),
@@ -433,6 +471,7 @@ def build_school() -> dict[str, int]:
             add_lockers(root, floor_z, 27.8 if floor_index == 1 else 8.0, 5, metal, trim)
 
         add_stair_visuals(root, floor_index, floor_z, stair_mat, rail_mat)
+        merge_floor_meshes(root)
 
     bpy.context.scene["noa_generator"] = "tools/blender/build_school.py"
     bpy.context.scene["noa_generator_version"] = GENERATOR_VERSION
