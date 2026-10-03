@@ -310,6 +310,8 @@ def add_student_entrance(root, mats):
     add_box("entrance_floor", (center_x, center_z, -0.06), (5.6, 6.8, 0.12), mats["entry_floor"], root, 0.004)
     add_box("entrance_ceiling", (center_x, center_z, 3.12), (5.6, 6.8, 0.10), mats["ceiling"], root, 0.004)
     add_box("entrance_outer_glass", (8.8, center_z, 1.55), (0.08, 6.8, 3.0), mats["glass"], root, 0.004)
+    add_box("entrance_north_wall", (6.0, 52.2, 1.55), (5.6, 0.18, 3.10), mats["wall"], root)
+    add_box("entrance_south_wall", (6.0, 59.0, 1.55), (5.6, 0.18, 3.10), mats["wall"], root)
     # Shoe lockers.
     for row, zz in enumerate((53.2, 54.6, 56.6, 58.0)):
         for col in range(6):
