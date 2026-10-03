@@ -58,7 +58,10 @@ def parse_args() -> argparse.Namespace:
 
 def game_to_blender_location(location: tuple[float, float, float]) -> tuple[float, float, float]:
     x, game_z, game_y = location
-    return (x, -game_z, game_y)
+    # Babylon's glTF loader adds a handedness-conversion root. Author Blender
+    # coordinates so the final Babylon absolute position becomes
+    # (game_x, game_y, game_z), not merely the raw glTF translation.
+    return (-x, game_z, -game_y)
 
 
 def reset_scene() -> None:
