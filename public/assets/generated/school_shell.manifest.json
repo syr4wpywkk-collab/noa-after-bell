@@ -5,10 +5,10 @@
   "corridor_length_m": 40.0,
   "corridor_width_m": 6.2,
   "object_count": 64,
-  "mesh_count": 630,
+  "mesh_count": 58,
   "material_count": 11,
-  "glb_bytes": 4397556,
-  "blend_bytes": 4409516,
+  "glb_bytes": 1968156,
+  "blend_bytes": 2728796,
   "glb": "school_shell.glb",
   "blend": "school_shell.blend"
 }
