@@ -80,6 +80,19 @@ def make_material(
     return mat
 
 
+def game_to_blender_location(
+    location: tuple[float, float, float],
+) -> tuple[float, float, float]:
+    """Map Babylon-style (x, z, y) authoring coordinates into Blender XYZ.
+
+    Blender glTF export converts +Y depth to -Z. Negating the authored game-Z
+    here makes the exported glTF/Babylon scene use +Z forward, matching the
+    player controller and the procedural collision world.
+    """
+    x, game_z, game_y = location
+    return (x, -game_z, game_y)
+
+
 def add_box(
     name: str,
     location: tuple[float, float, float],
@@ -89,7 +102,7 @@ def add_box(
     bevel: float = 0.018,
     parent: bpy.types.Object | None = None,
 ) -> bpy.types.Object:
-    bpy.ops.mesh.primitive_cube_add(size=1.0, location=location)
+    bpy.ops.mesh.primitive_cube_add(size=1.0, location=game_to_blender_location(location))
     obj = bpy.context.active_object
     obj.name = name
     obj.dimensions = dimensions
@@ -126,7 +139,7 @@ def add_cylinder(
         vertices=12,
         radius=radius,
         depth=depth,
-        location=location,
+        location=game_to_blender_location(location),
         rotation=rotation,
     )
     obj = bpy.context.active_object
@@ -359,7 +372,7 @@ def add_stair_visuals(
             0.045,
             math.hypot(run, FLOOR_HEIGHT),
             rail_mat,
-            rotation=(math.atan2(run, FLOOR_HEIGHT), 0.0, 0.0),
+            rotation=(direction * math.atan2(run, FLOOR_HEIGHT), 0.0, 0.0),
             parent=floor_root,
         )
         handrail["noa_role"] = "visual_handrail"
