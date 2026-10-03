@@ -43,6 +43,7 @@ The visual-asset pipeline runs Blender headlessly in GitHub Actions. It currentl
 - Runtime: validated `school_shell.glb` is committed into `public/assets/generated/` by CI for same-repository PRs, then loaded by Babylon.js as the visual layer.
 - Fallback: legacy Babylon geometry remains available invisibly for collision and becomes visible automatically if the GLB cannot load.
 - Mobile: Blender meshes are merged by material per floor and adjacent floors render only while traversing a stairwell.
+- Current generated runtime asset: ~1.9 MB GLB, 58 mesh objects, 10 exported materials, six validated floor roots.
 
 ## Commands
 
