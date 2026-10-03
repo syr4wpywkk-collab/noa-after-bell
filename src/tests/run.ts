@@ -8,6 +8,7 @@ import { EndingController } from "../endings/EndingController";
 import { localNoaResponse } from "../noa/LocalNoaRuntime";
 import type { NoaResponse } from "../noa/protocol";
 import { PLAYER_CENTER_HEIGHT, STAIRWELLS, floorFromPlayerHeight, isInStairwell, sampleStairRamp, stairProgressZ } from "../world/StairNavigation";
+import { FIRST_FLOOR_LENGTH, FIRST_FLOOR_ROOMS, FIRST_FLOOR_START, firstFloorRoomAt, firstFloorZoneAt } from "../world/FirstFloorLayout";
 
 function assert(value: unknown, message: string): asserts value { if (!value) throw new Error(message); }
 function response(event: NoaResponse["event"], source: NoaResponse["source"] = "noa"): NoaResponse { return { message: "ok", source, mood: "calm", event, delayMs: 0, confidence: 1 }; }
@@ -61,6 +62,16 @@ async function run(): Promise<void> {
   }
   assert(Math.abs(stairY - PLAYER_CENTER_HEIGHT) < 0.001, "round trip returns to 1F height");
 
+  assert(FIRST_FLOOR_LENGTH === 92, "v0.6 first floor uses the 92m benchmark plan");
+  assert(FIRST_FLOOR_ROOMS.filter((room) => room.kind === "classroom").length === 6, "1F has six classrooms");
+  assert(FIRST_FLOOR_ROOMS.filter((room) => room.kind === "toilet").length === 2, "1F has separate toilets");
+  assert(FIRST_FLOOR_ROOMS.some((room) => room.kind === "staff"), "1F has staff room");
+  assert(FIRST_FLOOR_ROOMS.some((room) => room.kind === "principal"), "1F has principal office");
+  assert(FIRST_FLOOR_ROOMS.some((room) => room.kind === "infirmary"), "1F has infirmary");
+  assert(FIRST_FLOOR_ROOMS.some((room) => room.kind === "career"), "1F has career guidance room");
+  assert(firstFloorRoomAt(FIRST_FLOOR_START.x, FIRST_FLOOR_START.z)?.id === "class_1_6", "player starts inside 1-6");
+  assert(firstFloorZoneAt(0, 70) === "administration_corridor", "admin corridor is mapped");
+
   const mat = { discovered: true, matsAvailable: 0, matsPlaced: 2, carrying: true, courtyardPrepared: false };
   assert(!canSprintWithMat(mat), "mat disables sprint"); const placed = placeCarriedMat(mat); assert(placed.matsPlaced === 3 && placed.courtyardPrepared, "third mat prepares courtyard");
 
@@ -78,7 +89,7 @@ async function run(): Promise<void> {
   assert(endings.canTrigger("ENDING_06_AFTER_BELL", trueReady), "after-bell ending requires full evidence");
   assert(localNoaResponse("帰りたい", state.snapshot(), "noa").message.length > 0, "deterministic NOA fallback responds");
   assert(!JSON.stringify(state.snapshot()).includes("OPENAI_API_KEY"), "client state contains no secret name");
-  console.log("v0.5 logic tests passed");
+  console.log("v0.6 logic tests passed");
 }
 
 void run();
