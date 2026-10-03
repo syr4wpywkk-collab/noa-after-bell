@@ -1,3 +1,4 @@
+import { firstFloorZoneAt, firstFloorZoneDisplay } from "../world/FirstFloorLayout";
 export type FloorId = 1 | 2 | 3 | 4 | 5 | 6;
 
 export const FLOOR_HEIGHT = 4.15;
@@ -11,7 +12,7 @@ export type FloorDefinition = {
 };
 
 export const FLOORS: readonly FloorDefinition[] = [
-  { floor: 1, label: "1F", department: "共用・体育", specialRoom: "体育職員室・マット庫", atmosphere: "正面玄関・中庭・電気室・体育館" },
+  { floor: 1, label: "1F", department: "1年教室・管理棟", specialRoom: "職員室・保健室・進路指導室", atmosphere: "6教室・トイレ・生徒玄関・管理諸室" },
   { floor: 2, label: "2F", department: "教職員", specialRoom: "職員室・放送室", atmosphere: "印刷室・監視モニター" },
   { floor: 3, label: "3F", department: "情報・生徒指導", specialRoom: "コンピュータ室", atmosphere: "ガラス連絡廊下" },
   { floor: 4, label: "4F", department: "理科", specialRoom: "化学実験室", atmosphere: "物理室・標本室" },
@@ -28,7 +29,7 @@ export function getFloorDefinition(floor: FloorId): FloorDefinition {
 }
 
 export function describeZone(floor: FloorId, x: number, z: number): string {
-  if (floor === 1 && z > 43) return "gym";
+  if (floor === 1) return firstFloorZoneAt(x, z);
   if (z < 5) return "north_stairs";
   if (z > 35) return "south_stairs";
   if (x < -3.15 && z > 16 && z < 24) {
@@ -41,8 +42,8 @@ export function describeZone(floor: FloorId, x: number, z: number): string {
 }
 
 export function zoneDisplayName(floor: FloorId, zone: string): string {
+  if (floor === 1) return firstFloorZoneDisplay(zone);
   const def = getFloorDefinition(floor);
-  if (zone === "gym") return "体育館";
   if (zone === "north_stairs") return `${def.label} 北階段`;
   if (zone === "south_stairs") return `${def.label} 南階段`;
   if (zone.startsWith("special_room:")) return `${def.label} ${zone.split(":")[1]}`;
