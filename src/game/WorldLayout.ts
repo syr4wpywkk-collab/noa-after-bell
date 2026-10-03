@@ -1,6 +1,7 @@
 export type FloorId = 1 | 2 | 3 | 4 | 5 | 6;
 
 export const FLOOR_HEIGHT = 4.15;
+export const PLAYER_FLOOR_OFFSET = 0.9;
 
 export type FloorDefinition = {
   floor: FloorId;
@@ -21,6 +22,11 @@ export const FLOORS: readonly FloorDefinition[] = [
 
 export function floorBaseY(floor: FloorId): number {
   return (floor - 1) * FLOOR_HEIGHT;
+}
+
+export function floorFromWorldY(worldY: number): FloorId {
+  const raw = Math.round((worldY - PLAYER_FLOOR_OFFSET) / FLOOR_HEIGHT) + 1;
+  return Math.max(1, Math.min(6, raw)) as FloorId;
 }
 
 export function getFloorDefinition(floor: FloorId): FloorDefinition {
