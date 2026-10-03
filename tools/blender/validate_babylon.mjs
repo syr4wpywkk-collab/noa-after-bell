@@ -5,7 +5,7 @@ import {
   SceneLoader,
   Vector3,
 } from "@babylonjs/core";
-import "@babylonjs/loaders/glTF";
+import "@babylonjs/loaders/glTF/index.js";
 
 const glbPath = process.argv[2];
 if (!glbPath) throw new Error("usage: node validate_babylon.mjs <school.glb>");
