@@ -218,7 +218,7 @@ export class School6F {
         new Vector3(1.48, 0.12, runLength + 0.72),
         new Vector3(stair.returnX, -0.06, midZ),
         landingMat,
-        true,
+        false,
       );
       this.box(
         root,
@@ -226,7 +226,7 @@ export class School6F {
         new Vector3(3.55, 0.12, 0.84),
         new Vector3(0, -0.06, stair.lowerZ),
         landingMat,
-        true,
+        false,
       );
       this.box(
         root,
@@ -234,7 +234,7 @@ export class School6F {
         new Vector3(3.55, 0.12, 0.84),
         new Vector3(0, -0.06, stair.upperZ),
         landingMat,
-        true,
+        false,
       );
 
       if (floor >= 6) continue;
