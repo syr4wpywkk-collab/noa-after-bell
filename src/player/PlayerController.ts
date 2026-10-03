@@ -8,6 +8,7 @@ import {
   Vector3,
 } from "@babylonjs/core";
 import { floorBaseY, type FloorId } from "../game/WorldLayout";
+import { floorFromPlayerHeight, sampleStairRamp } from "../world/StairNavigation";
 
 export class PlayerController {
   readonly camera: UniversalCamera;
@@ -161,7 +162,17 @@ export class PlayerController {
     this.moving = displacement.lengthSquared() > 0.00001;
     if (this.moving) this.collider.moveWithCollisions(displacement);
 
-    this.collider.position.y = floorBaseY(this.floor) + 0.9;
+    const stair = sampleStairRamp(
+      this.collider.position.x,
+      this.collider.position.z,
+      this.collider.position.y,
+    );
+    if (stair) {
+      this.collider.position.y = stair.playerY;
+      this.floor = floorFromPlayerHeight(stair.playerY);
+    } else {
+      this.collider.position.y = floorBaseY(this.floor) + 0.9;
+    }
   }
 
   isSprinting(): boolean { return this.sprinting; }
