@@ -15,7 +15,7 @@ import { HorrorDirector } from "../director/HorrorDirector";
 import { FakerRouter } from "../faker/FakerRouter";
 import type { FakerClue } from "../faker/FakerState";
 import { GameState } from "../game/GameState";
-import { describeZone, zoneDisplayName, type FloorId } from "../game/WorldLayout";
+import { describeZone, zoneDisplayName } from "../game/WorldLayout";
 import { SessionMemory } from "../memory/SessionMemory";
 import { NoaClient } from "../noa/NoaClient";
 import { NoaPhone, type MessageOptions } from "../noa/NoaPhone";
@@ -25,7 +25,6 @@ import { PlayerController } from "../player/PlayerController";
 import { PuzzleManager } from "../puzzles/PuzzleManager";
 import { School6F } from "../world/School6F";
 import type { WorldInteraction } from "../world/types";
-import { stairArrivalPoint } from "../world/StairNavigation";
 import { ThreatController } from "../threat/ThreatController";
 import { CameraController } from "../camera/CameraController";
 import { PhotoStore } from "../camera/PhotoStore";
@@ -154,6 +153,7 @@ export class Game {
   private updateGame(dt: number): void {
     const floor = this.player.getFloor();
     const position = this.player.getPosition();
+    this.school.setPlayerContext(floor, position);
     const zone = describeZone(floor, position.x, position.z);
     const location = zoneDisplayName(floor, zone);
     const nearby = this.school.getNearbyLabels(position, floor);
@@ -247,18 +247,6 @@ export class Game {
     if (now - this.lastInteractionAt < 450) return;
     this.lastInteractionAt = now;
     const interaction = this.currentInteraction;
-
-    if (interaction.kind === "stairs_up" || interaction.kind === "stairs_down") {
-      const delta = interaction.kind === "stairs_up" ? 1 : -1;
-      const next = Math.max(1, Math.min(6, this.player.getFloor() + delta)) as FloorId;
-      if (next === this.player.getFloor()) return;
-      const landing = stairArrivalPoint(interaction);
-      this.school.setActiveFloor(next);
-      this.player.setFloor(next, landing.x, landing.z);
-      this.phone.notify(`${next}F`, 1200);
-      this.state.setObjective(next === 6 ? "6F 資料室の保守端末を調べる" : "手掛かりと上階への経路を探す");
-      return;
-    }
 
     const action = this.puzzles.handle(interaction);
     if (action.type === "terminal") this.openTerminal();
