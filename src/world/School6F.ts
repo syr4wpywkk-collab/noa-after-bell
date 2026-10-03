@@ -11,6 +11,7 @@ import {
 } from "@babylonjs/core";
 import { FLOOR_HEIGHT, FLOORS, floorBaseY, getFloorDefinition, type FloorId } from "../game/WorldLayout";
 import type { WorldInteraction } from "./types";
+import { stairInteractionPoint } from "./StairNavigation";
 
 export class School6F {
   private roots = new Map<FloorId, TransformNode>();
@@ -199,17 +200,22 @@ export class School6F {
       }
     }
 
+    const northUp = stairInteractionPoint("north", "up");
+    const northDown = stairInteractionPoint("north", "down");
+    const southUp = stairInteractionPoint("south", "up");
+    const southDown = stairInteractionPoint("south", "down");
+
     if (floor < 6) {
-      this.interactions.push({ id: `stairs_north_up_${floor}`, kind: "stairs_up", floor, x: 0, y: floorBaseY(floor) + 0.9, z: 3.4, label: "上の階へ" });
+      this.interactions.push({ id: `stairs_north_up_${floor}`, kind: "stairs_up", floor, x: northUp.x, y: floorBaseY(floor) + 0.9, z: northUp.z, label: "上の階へ" });
     }
     if (floor > 1) {
-      this.interactions.push({ id: `stairs_north_down_${floor}`, kind: "stairs_down", floor, x: 0, y: floorBaseY(floor) + 0.9, z: 1.4, label: "下の階へ" });
+      this.interactions.push({ id: `stairs_north_down_${floor}`, kind: "stairs_down", floor, x: northDown.x, y: floorBaseY(floor) + 0.9, z: northDown.z, label: "下の階へ" });
     }
     if (floor < 6) {
-      this.interactions.push({ id: `stairs_south_up_${floor}`, kind: "stairs_up", floor, x: 0, y: floorBaseY(floor) + 0.9, z: 36.6, label: "上の階へ" });
+      this.interactions.push({ id: `stairs_south_up_${floor}`, kind: "stairs_up", floor, x: southUp.x, y: floorBaseY(floor) + 0.9, z: southUp.z, label: "上の階へ" });
     }
     if (floor > 1) {
-      this.interactions.push({ id: `stairs_south_down_${floor}`, kind: "stairs_down", floor, x: 0, y: floorBaseY(floor) + 0.9, z: 38.6, label: "下の階へ" });
+      this.interactions.push({ id: `stairs_south_down_${floor}`, kind: "stairs_down", floor, x: southDown.x, y: floorBaseY(floor) + 0.9, z: southDown.z, label: "下の階へ" });
     }
   }
 
