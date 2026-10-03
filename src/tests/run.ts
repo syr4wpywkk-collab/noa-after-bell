@@ -7,6 +7,7 @@ import { canSprintWithMat, placeCarriedMat } from "../mat/MatState";
 import { EndingController } from "../endings/EndingController";
 import { localNoaResponse } from "../noa/LocalNoaRuntime";
 import type { NoaResponse } from "../noa/protocol";
+import { STAIR_INTERACTION_RADIUS, stairArrivalPoint, stairInteractionPoint } from "../world/StairNavigation";
 
 function assert(value: unknown, message: string): asserts value { if (!value) throw new Error(message); }
 function response(event: NoaResponse["event"], source: NoaResponse["source"] = "noa"): NoaResponse { return { message: "ok", source, mood: "calm", event, delayMs: 0, confidence: 1 }; }
@@ -34,6 +35,12 @@ async function run(): Promise<void> {
   await photos.save({ blob, floor: 1, location: "test", virtualSizeMb: NORMAL_PHOTO_SIZE_MB });
   let full = false; try { await photos.save({ blob, floor: 1, location: "test", virtualSizeMb: NORMAL_PHOTO_SIZE_MB }); } catch { full = true; }
   assert(full && photos.usedMb() === 150, "150MB quota rejects overflow"); await photos.remove(first.id); assert(photos.usedMb() === 135, "deletion reclaims quota");
+
+  const northUp = stairInteractionPoint("north", "up");
+  const northDown = stairInteractionPoint("north", "down");
+  assert(Math.hypot(northUp.x, northUp.z - 6) < STAIR_INTERACTION_RADIUS, "north stair prompt is reachable from corridor center");
+  assert(northUp.x !== northDown.x, "stair directions remain spatially distinct");
+  assert(stairArrivalPoint(northUp).x === northUp.x, "stair arrival preserves traversal lane");
 
   const mat = { discovered: true, matsAvailable: 0, matsPlaced: 2, carrying: true, courtyardPrepared: false };
   assert(!canSprintWithMat(mat), "mat disables sprint"); const placed = placeCarriedMat(mat); assert(placed.matsPlaced === 3 && placed.courtyardPrepared, "third mat prepares courtyard");
