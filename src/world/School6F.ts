@@ -18,6 +18,7 @@ export class School6F {
   private lights = new Map<FloorId, PointLight[]>();
   private interactions: WorldInteraction[] = [];
   private activeFloor: FloorId = 1;
+  private visibilityKey = "";
   private flickerFloor: FloorId | null = null;
   private flickerUntil = 0;
   private flickerBase = new Map<PointLight, number>();
@@ -53,6 +54,9 @@ export class School6F {
   }
 
   private applyFloorVisibility(floor: FloorId, includeAdjacent: boolean): void {
+    const key = `${floor}:${includeAdjacent ? 1 : 0}`;
+    if (this.visibilityKey === key) return;
+    this.visibilityKey = key;
     this.activeFloor = floor;
     for (const [id, root] of this.roots) {
       root.setEnabled(id === floor || (includeAdjacent && Math.abs(id - floor) <= 1));
