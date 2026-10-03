@@ -23,6 +23,7 @@ export class School6F {
   private flickerFloor: FloorId | null = null;
   private flickerUntil = 0;
   private flickerBase = new Map<PointLight, number>();
+  private disabledLightingFloors = new Set<FloorId>();
 
   private wall!: PBRMaterial;
   private floorMat!: PBRMaterial;
@@ -55,6 +56,8 @@ export class School6F {
   }
 
   setFloorLightingEnabled(floor: FloorId, enabled: boolean): void {
+    if (enabled) this.disabledLightingFloors.delete(floor);
+    else this.disabledLightingFloors.add(floor);
     for (const light of this.lights.get(floor) ?? []) light.setEnabled(enabled);
   }
 
@@ -84,7 +87,7 @@ export class School6F {
       root.setEnabled(id === floor || (includeAdjacent && Math.abs(id - floor) <= 1));
     }
     for (const [id, lights] of this.lights) {
-      const enabled = id === floor || (includeAdjacent && Math.abs(id - floor) <= 1);
+      const enabled = (id === floor || (includeAdjacent && Math.abs(id - floor) <= 1)) && !this.disabledLightingFloors.has(id);
       for (const light of lights) light.setEnabled(enabled);
     }
   }
@@ -199,6 +202,8 @@ export class School6F {
     // Main/student entrance at the middle of the right-hand side.
     this.box(root, "f1-v06-entrance-floor", new Vector3(5.6, 0.12, 6.8), new Vector3(6.0, -0.06, 55.6), this.floorMat, true);
     this.box(root, "f1-v06-entrance-back", new Vector3(0.18, 3.2, 6.8), new Vector3(8.8, 1.55, 55.6), this.glass, true);
+    this.box(root, "f1-v06-entrance-north-wall", new Vector3(5.6, 3.2, 0.18), new Vector3(6.0, 1.55, 52.2), this.wall, true);
+    this.box(root, "f1-v06-entrance-south-wall", new Vector3(5.6, 3.2, 0.18), new Vector3(6.0, 1.55, 59.0), this.wall, true);
 
     this.interactions.push({ id: "f1_staff_door", kind: "clue", floor: 1, x: 3.0, y: 0.9, z: 76.8, label: "職員室の入口を見る" });
     this.interactions.push({ id: "f1_infirmary", kind: "clue", floor: 1, x: -3.0, y: 0.9, z: 69.5, label: "保健室を調べる" });
