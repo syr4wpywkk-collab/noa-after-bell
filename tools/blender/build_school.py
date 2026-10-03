@@ -101,7 +101,7 @@ def add_box(
     if bevel > 0:
         modifier = obj.modifiers.new(name="micro_bevel", type="BEVEL")
         modifier.width = bevel
-        modifier.segments = 2
+        modifier.segments = 1
         modifier.limit_method = "ANGLE"
         bpy.context.view_layer.objects.active = obj
         bpy.ops.object.modifier_apply(modifier=modifier.name)
