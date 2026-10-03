@@ -9,6 +9,7 @@ import {
 } from "@babylonjs/core";
 import type { FloorId } from "../game/WorldLayout";
 import { isInStairwell } from "./StairNavigation";
+import { FIRST_FLOOR_START } from "./FirstFloorLayout";
 
 export type SchoolVisualMode = "blender" | "fallback";
 
@@ -52,6 +53,7 @@ export class SchoolVisuals {
         mesh.receiveShadows = true;
       }
 
+      let startLightPosition: Vector3 | null = null;
       for (const node of result.transformNodes) {
         const floorMatch = FLOOR_NODE.exec(node.name);
         if (floorMatch) {
@@ -64,6 +66,7 @@ export class SchoolVisuals {
           node.computeWorldMatrix(true);
           const floor = Number(lightMatch[1]) as FloorId;
           const position = node.getAbsolutePosition().clone();
+          if (node.name === "LIGHT_F1_CLASS_class_1_6_01") startLightPosition = position.clone();
           const isCorridor = node.name.includes("CORRIDOR");
           const isEmergency = node.name.includes("EMERGENCY");
           const baseIntensity = isEmergency ? 0.28 : isCorridor ? 0.72 : 0.58;
@@ -77,14 +80,37 @@ export class SchoolVisuals {
         }
       }
 
-      if (this.floorRoots.size !== 6 || this.markerLights.filter((entry) => entry.floor === 1).length < 10) {
+      const expectedStartLight = new Vector3(-6.8, 2.68, 57);
+      const alignmentError = startLightPosition
+        ? Vector3.Distance(startLightPosition, expectedStartLight)
+        : Number.POSITIVE_INFINITY;
+      const floorOneRoot = this.floorRoots.get(1);
+      floorOneRoot?.computeWorldMatrix(true);
+      const floorMeshes = floorOneRoot?.getChildMeshes(false) ?? [];
+      const maxFloorOneY = floorMeshes.length
+        ? Math.max(...floorMeshes.map((mesh) => {
+          mesh.computeWorldMatrix(true);
+          return mesh.getBoundingInfo().boundingBox.maximumWorld.y;
+        }))
+        : Number.NEGATIVE_INFINITY;
+
+      if (
+        this.floorRoots.size !== 6 ||
+        this.markerLights.filter((entry) => entry.floor === 1).length < 10 ||
+        alignmentError > 1.25 ||
+        maxFloorOneY < 2.5
+      ) {
+        for (const marker of this.markerLights) marker.light.dispose();
+        this.markerLights = [];
         for (const mesh of result.meshes) mesh.dispose(false, true);
         for (const node of result.transformNodes) node.dispose();
-        throw new Error(`invalid Blender school: floors=${this.floorRoots.size}, 1F lights=${this.markerLights.filter((entry) => entry.floor === 1).length}`);
+        throw new Error(
+          `invalid Blender school: floors=${this.floorRoots.size}, 1F lights=${this.markerLights.filter((entry) => entry.floor === 1).length}, alignment=${alignmentError.toFixed(2)}, maxY=${maxFloorOneY.toFixed(2)}`,
+        );
       }
 
       this.loaded = true;
-      this.setPlayerContext(1, new Vector3(0, 0.9, 6));
+      this.setPlayerContext(1, new Vector3(FIRST_FLOOR_START.x, FIRST_FLOOR_START.y, FIRST_FLOOR_START.z));
 
       const materialCount = new Set(
         result.meshes

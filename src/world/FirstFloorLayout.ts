@@ -52,7 +52,7 @@ export const FIRST_FLOOR_START = {
   x: -6.65,
   y: 0.9,
   z: 57.0,
-  yaw: Math.PI / 2,
+  yaw: Math.atan2(3.45, 2.7),
 } as const;
 
 export function firstFloorRoomAt(x: number, z: number): FirstFloorRoom | undefined {

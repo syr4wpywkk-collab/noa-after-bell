@@ -41,6 +41,7 @@ The visual-asset pipeline runs Blender headlessly in GitHub Actions. It currentl
 
 - Generator: `tools/blender/build_school.py`
 - Validation: `tools/blender/validate_glb.py`
+- Babylon runtime validation: `tools/blender/validate_babylon.mjs` loads the generated GLB through Babylon NullEngine and verifies the 1-6 marker/world bounds before assets can publish.
 - Workflow: `.github/workflows/blender-assets.yml`
 - Trigger: manual dispatch, relevant pull requests, and relevant pushes to `main`
 - Runtime: validated `school_shell.glb` is committed into `public/assets/generated/` by CI for same-repository PRs, then loaded by Babylon.js as the visual layer.
