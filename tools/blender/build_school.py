@@ -348,7 +348,10 @@ def build_school() -> dict[str, int]:
     trim = make_material("M_trim", (0.15, 0.18, 0.18, 1.0), roughness=0.72)
     glass = make_material("M_night_glass", (0.02, 0.055, 0.07, 0.72), roughness=0.12)
     glass.diffuse_color = (0.02, 0.055, 0.07, 0.72)
-    glass.blend_method = "BLEND" if hasattr(glass, "blend_method") else getattr(glass, "blend_method", None)
+    if hasattr(glass, "surface_render_method"):
+        glass.surface_render_method = "DITHERED"
+    elif hasattr(glass, "blend_method"):
+        glass.blend_method = "BLEND"
     light_panel = make_material(
         "M_fluorescent_panel",
         (0.73, 0.86, 0.88, 1.0),
@@ -360,7 +363,10 @@ def build_school() -> dict[str, int]:
 
     for floor_index in range(1, FLOOR_COUNT + 1):
         floor_z = (floor_index - 1) * FLOOR_HEIGHT
-        root = add_empty(f"FLOOR_{floor_index:02d}", floor_z)
+        # Meshes below are authored in absolute metric coordinates so the GLB
+        # can later align directly with Babylon world dimensions. The empty is
+        # therefore an organizational parent only and stays at the origin.
+        root = add_empty(f"FLOOR_{floor_index:02d}", 0.0)
 
         # Structural shell
         add_box(
