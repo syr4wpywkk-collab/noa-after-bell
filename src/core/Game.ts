@@ -24,6 +24,7 @@ import { MobileControls } from "../player/MobileControls";
 import { PlayerController } from "../player/PlayerController";
 import { PuzzleManager } from "../puzzles/PuzzleManager";
 import { School6F } from "../world/School6F";
+import { SchoolVisuals, type SchoolVisualMode } from "../world/SchoolVisuals";
 import type { WorldInteraction } from "../world/types";
 import { ThreatController } from "../threat/ThreatController";
 import { CameraController } from "../camera/CameraController";
@@ -43,6 +44,8 @@ export class Game {
   private engine: Engine;
   private scene!: Scene;
   private school!: School6F;
+  private visuals!: SchoolVisuals;
+  private visualMode: SchoolVisualMode = "fallback";
   private player!: PlayerController;
   private mobile!: MobileControls;
   private phone!: NoaPhone;
@@ -87,6 +90,19 @@ export class Game {
     this.scene = this.createScene();
     this.school = new School6F(this.scene);
     this.school.build();
+
+    const bootStatus = document.querySelector<HTMLElement>("#boot-status");
+    if (bootStatus) bootStatus.textContent = "BLENDER 校舎アセットを読み込み中…";
+    this.visuals = new SchoolVisuals(this.scene);
+    const visualLoad = await this.visuals.load();
+    this.visualMode = visualLoad.mode;
+    if (visualLoad.mode === "blender") {
+      this.school.setLegacyVisualsMuted(true);
+      if (bootStatus) bootStatus.textContent = `BLENDER READY · ${visualLoad.meshCount} MESHES / ${visualLoad.materialCount} MATERIALS`;
+    } else if (bootStatus) {
+      bootStatus.textContent = "3D FALLBACK · 校舎アセットを簡易表示で起動";
+      console.warn("Blender visual layer unavailable:", visualLoad.reason);
+    }
 
     this.player = new PlayerController(this.scene, this.canvas);
     this.player.spawn(new Vector3(0, 0.9, 6), 1);
@@ -154,6 +170,7 @@ export class Game {
     const floor = this.player.getFloor();
     const position = this.player.getPosition();
     this.school.setPlayerContext(floor, position);
+    this.visuals.setPlayerContext(floor, position);
     const zone = describeZone(floor, position.x, position.z);
     const location = zoneDisplayName(floor, zone);
     const nearby = this.school.getNearbyLabels(position, floor);
@@ -421,7 +438,7 @@ export class Game {
     const start = document.querySelector<HTMLElement>("#start-screen");
     const button = document.querySelector<HTMLButtonElement>("#enter-button");
     const status = document.querySelector<HTMLElement>("#boot-status");
-    if (status) status.textContent = "v0.4 · SURVIVAL / CAMERA / SIX ENDINGS";
+    if (status) status.textContent = this.visualMode === "blender" ? "v0.5 · BLENDER VISUALS / SURVIVAL / SIX ENDINGS" : "v0.5 · FALLBACK VISUALS / SURVIVAL";
 
     button?.addEventListener("click", async () => {
       start?.classList.add("hidden");
@@ -477,8 +494,11 @@ export class Game {
     pipeline.bloomWeight = 0.13;
     pipeline.bloomKernel = 32;
     pipeline.imageProcessingEnabled = true;
-    pipeline.imageProcessing.contrast = 1.13;
-    pipeline.imageProcessing.exposure = 0.86;
+    pipeline.imageProcessing.contrast = 1.16;
+    pipeline.imageProcessing.exposure = 0.9;
+    pipeline.imageProcessing.vignetteEnabled = true;
+    pipeline.imageProcessing.vignetteWeight = 1.25;
+    pipeline.imageProcessing.vignetteStretch = 0.15;
     return scene;
   }
 
