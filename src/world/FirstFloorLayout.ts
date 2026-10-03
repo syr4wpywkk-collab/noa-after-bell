@@ -49,10 +49,13 @@ export const FIRST_FLOOR_ROOMS: readonly FirstFloorRoom[] = [
 ] as const;
 
 export const FIRST_FLOOR_START = {
-  x: -6.65,
+  // Clear aisle immediately inside 1-6, just before the corridor doorway.
+  // This avoids spawning inside the visual desk grid and gives the player an
+  // obvious one-stick exit path on mobile.
+  x: -4.35,
   y: 0.9,
-  z: 57.0,
-  yaw: Math.atan2(3.45, 2.7),
+  z: 59.7,
+  yaw: Math.PI / 2,
 } as const;
 
 export function firstFloorRoomAt(x: number, z: number): FirstFloorRoom | undefined {
