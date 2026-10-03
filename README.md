@@ -32,6 +32,16 @@ The vertical slice now connects trust to stealth, evidence, storage pressure, an
 
 Evidence photos near marked clues contribute to the true-ending state. The blue mats in the 1F gym store can be carried to the courtyard in three trips; this deliberately obstructs the view and disables sprinting/chat. Its 6F resolution is an abstract, explicitly fictional game sequence, not a real-world safety simulation.
 
+## Blender asset pipeline
+
+The visual-asset pipeline runs Blender headlessly in GitHub Actions. It currently generates a procedural six-floor school shell as both `school_shell.glb` and `school_shell.blend`, re-imports the GLB in a clean Blender process for validation, writes checksums/metadata, and uploads the results as a workflow artifact.
+
+- Generator: `tools/blender/build_school.py`
+- Validation: `tools/blender/validate_glb.py`
+- Workflow: `.github/workflows/blender-assets.yml`
+- Trigger: manual dispatch, relevant pull requests, and relevant pushes to `main`
+- Current status: asset-authoring pipeline only; Babylon.js still owns gameplay geometry/collision until generated GLB integration lands separately.
+
 ## Commands
 
 - `npm test` — bundles and runs deterministic v0.4.1 logic checks.
