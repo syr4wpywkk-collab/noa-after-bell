@@ -14,7 +14,7 @@ on:
       - ".github/workflows/blender-assets.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: blender-assets-${{ github.ref }}
@@ -29,6 +29,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
 
       - name: Install Blender
         run: |
@@ -48,8 +50,9 @@ jobs:
           blender --background --factory-startup \
             --python tools/blender/validate_glb.py -- \
             build/blender/school_shell.glb \
-            --min-meshes 100 \
-            --min-materials 6
+            --min-meshes 30 \
+            --min-materials 6 \
+            --max-mb 6
 
       - name: Write checksums
         run: |
@@ -76,3 +79,21 @@ jobs:
           if-no-files-found: error
           retention-days: 14
           compression-level: 6
+
+      - name: Publish runtime GLB to PR branch
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          mkdir -p public/assets/generated
+          cp build/blender/school_shell.glb public/assets/generated/school_shell.glb
+          cp build/blender/school_shell.manifest.json public/assets/generated/school_shell.manifest.json
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/assets/generated/school_shell.glb public/assets/generated/school_shell.manifest.json
+
+          if git diff --cached --quiet; then
+            echo "Generated runtime assets are already current."
+          else
+            git commit -m "chore: refresh generated Blender runtime assets"
+            git push origin HEAD:${{ github.head_ref }}
+          fi

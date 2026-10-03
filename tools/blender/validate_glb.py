@@ -18,6 +18,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("glb")
     parser.add_argument("--min-meshes", type=int, default=100)
     parser.add_argument("--min-materials", type=int, default=6)
+    parser.add_argument("--max-mb", type=float, default=6.0)
     return parser.parse_args(argv)
 
 
@@ -33,12 +34,15 @@ def main() -> None:
 
     mesh_count = sum(1 for obj in bpy.context.scene.objects if obj.type == "MESH")
     materials = {slot.material.name for obj in bpy.context.scene.objects for slot in obj.material_slots if slot.material}
+    floor_nodes = {obj.name for obj in bpy.context.scene.objects if obj.name.startswith("FLOOR_")}
+    expected_floors = {f"FLOOR_{floor_id:02d}" for floor_id in range(1, 7)}
 
     report = {
         "glb": str(glb),
         "bytes": glb.stat().st_size,
         "mesh_objects": mesh_count,
         "materials": len(materials),
+        "floor_roots": len(expected_floors & floor_nodes),
     }
     print(json.dumps(report, indent=2))
 
@@ -46,6 +50,11 @@ def main() -> None:
         raise SystemExit(f"Expected >= {args.min_meshes} mesh objects, got {mesh_count}")
     if len(materials) < args.min_materials:
         raise SystemExit(f"Expected >= {args.min_materials} materials, got {len(materials)}")
+    if not expected_floors.issubset(floor_nodes):
+        missing = sorted(expected_floors - floor_nodes)
+        raise SystemExit(f"Missing floor roots: {missing}")
+    if glb.stat().st_size > args.max_mb * 1024 * 1024:
+        raise SystemExit(f"GLB exceeds mobile budget of {args.max_mb:.1f} MB")
 
 
 if __name__ == "__main__":

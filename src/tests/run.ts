@@ -78,7 +78,7 @@ async function run(): Promise<void> {
   assert(endings.canTrigger("ENDING_06_AFTER_BELL", trueReady), "after-bell ending requires full evidence");
   assert(localNoaResponse("帰りたい", state.snapshot(), "noa").message.length > 0, "deterministic NOA fallback responds");
   assert(!JSON.stringify(state.snapshot()).includes("OPENAI_API_KEY"), "client state contains no secret name");
-  console.log("v0.4.1 logic tests passed");
+  console.log("v0.5 logic tests passed");
 }
 
 void run();

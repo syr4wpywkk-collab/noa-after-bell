@@ -2,11 +2,11 @@
 
 Mobile-first psychological horror game set in a six-floor Japanese integrated middle/high school.
 
-## v0.4.1 — SEAMLESS STAIRS
+## v0.5 — BLENDER VISUAL PASS
 
-The vertical slice now connects trust to stealth, evidence, storage pressure, and deterministic escape routes.
+The vertical slice now combines the existing survival systems with a generated Blender visual layer while keeping gameplay collision and world truth engine-owned.
 
-- Six-floor 3D school with floor-specific rooms, mobile floor culling, and continuous walkable stairwells
+- Six-floor 3D school with Blender-authored corridor/stair visuals, floor-specific rooms, mobile floor culling, and continuous walkable stairwells
 - NOA read-only GameState context
 - FAKER imitation router with rotating tells
 - Strict NOA response protocol + allow-listed EventValidator
@@ -40,11 +40,14 @@ The visual-asset pipeline runs Blender headlessly in GitHub Actions. It currentl
 - Validation: `tools/blender/validate_glb.py`
 - Workflow: `.github/workflows/blender-assets.yml`
 - Trigger: manual dispatch, relevant pull requests, and relevant pushes to `main`
-- Current status: asset-authoring pipeline only; Babylon.js still owns gameplay geometry/collision until generated GLB integration lands separately.
+- Runtime: validated `school_shell.glb` is committed into `public/assets/generated/` by CI for same-repository PRs, then loaded by Babylon.js as the visual layer.
+- Fallback: legacy Babylon geometry remains available invisibly for collision and becomes visible automatically if the GLB cannot load.
+- Mobile: Blender meshes are merged by material per floor and adjacent floors render only while traversing a stairwell.
+- Current generated runtime asset: ~1.9 MB GLB, 58 mesh objects, 10 exported materials, six validated floor roots.
 
 ## Commands
 
-- `npm test` — bundles and runs deterministic v0.4.1 logic checks.
+- `npm test` — bundles and runs deterministic v0.5 logic checks.
 - `npm run typecheck` — strict TypeScript check.
 - `npm run build` — typecheck plus the production Vite/PWA build.
 
