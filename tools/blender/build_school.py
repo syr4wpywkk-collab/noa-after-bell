@@ -187,12 +187,12 @@ def add_room_shell(root, room, mats):
 
 
 def add_desk(root, prefix, x, z, mats, rotation=False):
-    add_box(f"{prefix}_top", (x, z, 0.72), (0.72, 0.50, 0.07), mats["desk"], root, 0.01)
+    add_box(f"{prefix}_top", (x, z, 0.72), (0.72, 0.50, 0.07), mats["desk"], root, 0.004)
     for dx in (-0.28, 0.28):
         for dz in (-0.18, 0.18):
-            add_box(f"{prefix}_leg_{dx}_{dz}", (x + dx, z + dz, 0.36), (0.045, 0.045, 0.66), mats["metal"], root, 0.003)
-    add_box(f"{prefix}_chair", (x + 0.62, z, 0.46), (0.45, 0.46, 0.08), mats["desk"], root, 0.006)
-    add_box(f"{prefix}_chair_back", (x + 0.80, z, 0.75), (0.06, 0.46, 0.54), mats["desk"], root, 0.006)
+            add_box(f"{prefix}_leg_{dx}_{dz}", (x + dx, z + dz, 0.36), (0.045, 0.045, 0.66), mats["metal"], root, 0.0)
+    add_box(f"{prefix}_chair", (x + 0.62, z, 0.46), (0.45, 0.46, 0.08), mats["desk"], root, 0.003)
+    add_box(f"{prefix}_chair_back", (x + 0.80, z, 0.75), (0.06, 0.46, 0.54), mats["desk"], root, 0.003)
 
 
 def furnish_classroom(root, room, mats, variant):
