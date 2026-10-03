@@ -69,14 +69,14 @@ def main() -> None:
         raise SystemExit(f"Missing floor roots: {missing}")
     if glb.stat().st_size > args.max_mb * 1024 * 1024:
         raise SystemExit(f"GLB exceeds mobile budget of {args.max_mb:.1f} MB")
-    if not world_ys or max(world_ys) < 90.0:
-        raise SystemExit("v0.6 first floor does not extend to the expected +92 m Blender Y depth")
+    if not world_ys or min(world_ys) > -90.0:
+        raise SystemExit("v0.6 first floor does not extend to the expected -92 m Blender Y depth")
     if len(light_markers) < 20:
         raise SystemExit(f"Expected at least 20 first-floor runtime light markers, got {len(light_markers)}")
     if start_light is None:
         raise SystemExit("Missing 1-6 center light marker")
     start = start_light.matrix_world.translation
-    expected = mathutils.Vector((6.8, 57.0, -2.68))
+    expected = mathutils.Vector((6.8, -57.0, 2.68))
     if (start - expected).length > 0.25:
         raise SystemExit(f"1-6 start light authoring coordinates are wrong: {tuple(start)}")
 
