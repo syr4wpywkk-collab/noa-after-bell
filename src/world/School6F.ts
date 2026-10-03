@@ -12,6 +12,7 @@ import {
 import { FLOOR_HEIGHT, FLOORS, floorBaseY, getFloorDefinition, type FloorId } from "../game/WorldLayout";
 import type { WorldInteraction } from "./types";
 import { STAIR_STEP_COUNT, STAIRWELLS, isInStairwell, stairProgressZ, stairRunLength } from "./StairNavigation";
+import { FIRST_FLOOR_CORRIDOR_HALF_WIDTH, FIRST_FLOOR_LENGTH, FIRST_FLOOR_ROOM_DEPTH, FIRST_FLOOR_ROOMS, type FirstFloorSide } from "./FirstFloorLayout";
 
 export class School6F {
   private roots = new Map<FloorId, TransformNode>();
@@ -22,6 +23,7 @@ export class School6F {
   private flickerFloor: FloorId | null = null;
   private flickerUntil = 0;
   private flickerBase = new Map<PointLight, number>();
+  private disabledLightingFloors = new Set<FloorId>();
 
   private wall!: PBRMaterial;
   private floorMat!: PBRMaterial;
@@ -53,6 +55,12 @@ export class School6F {
     return this.activeFloor;
   }
 
+  setFloorLightingEnabled(floor: FloorId, enabled: boolean): void {
+    if (enabled) this.disabledLightingFloors.delete(floor);
+    else this.disabledLightingFloors.add(floor);
+    for (const light of this.lights.get(floor) ?? []) light.setEnabled(enabled);
+  }
+
   setLegacyVisualsMuted(muted: boolean): void {
     for (const root of this.roots.values()) {
       for (const mesh of root.getChildMeshes(false)) {
@@ -63,6 +71,7 @@ export class School6F {
   }
 
   private isReplacedByBlender(name: string): boolean {
+    if (/^f1-v06-/i.test(name)) return true;
     if (/^f[1-6]-(corridor-floor|corridor-ceiling|right-wall|left-wall-|door|window|floor-seam|skirt|light-panel|north-|south-)/i.test(name)) {
       return true;
     }
@@ -78,7 +87,7 @@ export class School6F {
       root.setEnabled(id === floor || (includeAdjacent && Math.abs(id - floor) <= 1));
     }
     for (const [id, lights] of this.lights) {
-      const enabled = id === floor || (includeAdjacent && Math.abs(id - floor) <= 1);
+      const enabled = (id === floor || (includeAdjacent && Math.abs(id - floor) <= 1)) && !this.disabledLightingFloors.has(id);
       for (const light of lights) light.setEnabled(enabled);
     }
   }
@@ -135,13 +144,73 @@ export class School6F {
     this.roots.set(floor, root);
     this.lights.set(floor, []);
 
-    this.buildCorridor(floor, root);
-    this.buildSpecialRoom(floor, root);
-    this.buildStairs(floor, root);
-    this.buildFloorLighting(floor, root);
+    if (floor === 1) {
+      this.buildFirstFloor(root);
+      this.buildStairs(floor, root);
+      this.buildFloorLighting(floor, root);
+    } else {
+      this.buildCorridor(floor, root);
+      this.buildSpecialRoom(floor, root);
+      this.buildStairs(floor, root);
+      this.buildFloorLighting(floor, root);
+    }
 
-    if (floor === 1) this.buildGym(root);
     if (floor === 6) this.buildSixthFloorDetails(root);
+  }
+
+  private buildFirstFloor(root: TransformNode): void {
+    const width = FIRST_FLOOR_CORRIDOR_HALF_WIDTH * 2;
+    this.box(root, "f1-v06-corridor-floor", new Vector3(width, 0.12, FIRST_FLOOR_LENGTH), new Vector3(0, -0.06, FIRST_FLOOR_LENGTH / 2), this.floorMat, true);
+    this.box(root, "f1-v06-corridor-ceiling", new Vector3(width, 0.10, FIRST_FLOOR_LENGTH), new Vector3(0, 3.12, FIRST_FLOOR_LENGTH / 2), this.ceiling, false);
+
+    const buildSideWall = (side: FirstFloorSide): void => {
+      const x = side === "left" ? -FIRST_FLOOR_CORRIDOR_HALF_WIDTH : FIRST_FLOOR_CORRIDOR_HALF_WIDTH;
+      const openings = FIRST_FLOOR_ROOMS
+        .filter((room) => room.side === side)
+        .map((room) => ({ start: room.doorZ - 0.82, end: room.doorZ + 0.82 }));
+      if (side === "right") openings.push({ start: 54.2, end: 57.0 });
+      openings.sort((a, b) => a.start - b.start);
+      let cursor = 0;
+      openings.forEach((opening, index) => {
+        const start = Math.max(cursor, opening.start);
+        if (start > cursor) {
+          this.box(root, `f1-v06-${side}-corridor-wall-${index}`, new Vector3(0.18, 3.2, start - cursor), new Vector3(x, 1.55, (start + cursor) / 2), this.wall, true);
+        }
+        cursor = Math.max(cursor, opening.end);
+      });
+      if (cursor < FIRST_FLOOR_LENGTH) {
+        this.box(root, `f1-v06-${side}-corridor-wall-end`, new Vector3(0.18, 3.2, FIRST_FLOOR_LENGTH - cursor), new Vector3(x, 1.55, (FIRST_FLOOR_LENGTH + cursor) / 2), this.wall, true);
+      }
+    };
+
+    buildSideWall("left");
+    buildSideWall("right");
+
+    for (const room of FIRST_FLOOR_ROOMS) {
+      const sign = room.side === "left" ? -1 : 1;
+      const centerX = sign * (FIRST_FLOOR_CORRIDOR_HALF_WIDTH + FIRST_FLOOR_ROOM_DEPTH / 2);
+      const outerX = sign * (FIRST_FLOOR_CORRIDOR_HALF_WIDTH + FIRST_FLOOR_ROOM_DEPTH);
+      const centerZ = (room.startZ + room.endZ) / 2;
+      const depthZ = room.endZ - room.startZ;
+      this.box(root, `f1-v06-${room.id}-floor`, new Vector3(FIRST_FLOOR_ROOM_DEPTH, 0.12, depthZ), new Vector3(centerX, -0.06, centerZ), this.floorMat, true);
+      this.box(root, `f1-v06-${room.id}-ceiling`, new Vector3(FIRST_FLOOR_ROOM_DEPTH, 0.10, depthZ), new Vector3(centerX, 3.12, centerZ), this.ceiling, false);
+      this.box(root, `f1-v06-${room.id}-outer`, new Vector3(0.18, 3.2, depthZ), new Vector3(outerX, 1.55, centerZ), this.wall, true);
+      this.box(root, `f1-v06-${room.id}-front`, new Vector3(FIRST_FLOOR_ROOM_DEPTH, 3.2, 0.18), new Vector3(centerX, 1.55, room.startZ), this.wall, true);
+      this.box(root, `f1-v06-${room.id}-back`, new Vector3(FIRST_FLOOR_ROOM_DEPTH, 3.2, 0.18), new Vector3(centerX, 1.55, room.endZ), this.wall, true);
+    }
+
+    // Main/student entrance at the middle of the right-hand side.
+    this.box(root, "f1-v06-entrance-floor", new Vector3(5.6, 0.12, 6.8), new Vector3(6.0, -0.06, 55.6), this.floorMat, true);
+    this.box(root, "f1-v06-entrance-back", new Vector3(0.18, 3.2, 6.8), new Vector3(8.8, 1.55, 55.6), this.glass, true);
+    this.box(root, "f1-v06-entrance-north-wall", new Vector3(5.6, 3.2, 0.18), new Vector3(6.0, 1.55, 52.2), this.wall, true);
+    this.box(root, "f1-v06-entrance-south-wall", new Vector3(5.6, 3.2, 0.18), new Vector3(6.0, 1.55, 59.0), this.wall, true);
+
+    this.interactions.push({ id: "f1_staff_door", kind: "clue", floor: 1, x: 3.0, y: 0.9, z: 76.8, label: "職員室の入口を見る" });
+    this.interactions.push({ id: "f1_infirmary", kind: "clue", floor: 1, x: -3.0, y: 0.9, z: 69.5, label: "保健室を調べる" });
+    this.interactions.push({ id: "f1_career", kind: "clue", floor: 1, x: -3.0, y: 0.9, z: 77.5, label: "進路指導室を調べる" });
+    this.interactions.push({ id: "exit_a", kind: "exit_a", floor: 1, x: 4.1, y: 0.9, z: 55.6, label: "生徒玄関から外を見る" });
+    this.interactions.push({ id: "mat_storage_1f", kind: "mat_pickup", floor: 1, x: 2.7, y: 0.9, z: 89.0, label: "倉庫の体育マットを運ぶ" });
+    this.interactions.push({ id: "courtyard_1f", kind: "mat_place", floor: 1, x: 7.4, y: 0.9, z: 55.6, label: "中庭側にマットを置く" });
   }
 
   private buildCorridor(floor: FloorId, root: TransformNode): void {
@@ -220,7 +289,8 @@ export class School6F {
     const landingMat = this.pbr(`stair-landings-${floor}`, new Color3(0.12, 0.16, 0.15), 0.82);
     const railMat = this.pbr(`stair-rails-${floor}`, new Color3(0.10, 0.12, 0.12), 0.62, 0.22);
 
-    for (const side of ["north", "south"] as const) {
+    const stairSides = floor === 1 ? (["north"] as const) : (["north", "south"] as const);
+    for (const side of stairSides) {
       const stair = STAIRWELLS[side];
       const runLength = stairRunLength(side);
       const midZ = (stair.lowerZ + stair.upperZ) / 2;
@@ -306,7 +376,8 @@ export class School6F {
     panelMat.disableLighting = true;
     panelMat.emissiveColor = floor === 5 ? new Color3(0.68, 0.79, 0.73) : new Color3(0.72, 0.84, 0.84);
 
-    [7, 20, 33].forEach((z, index) => {
+    const lightPositions = floor === 1 ? [7, 18, 29, 40, 51, 62, 73, 84] : [7, 20, 33];
+    lightPositions.forEach((z, index) => {
       this.box(root, `f${floor}-light-panel-${index}`, new Vector3(1.65, 0.05, 0.24), new Vector3(0, 3.05, z), panelMat, false);
       const light = new PointLight(`f${floor}-light-${index}`, new Vector3(0, 2.72, z), this.scene);
       light.parent = root;

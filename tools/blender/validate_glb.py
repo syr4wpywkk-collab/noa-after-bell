@@ -44,6 +44,7 @@ def main() -> None:
             world_ys.append(world_corner.y)
     floor_nodes = {obj.name for obj in bpy.context.scene.objects if obj.name.startswith("FLOOR_")}
     expected_floors = {f"FLOOR_{floor_id:02d}" for floor_id in range(1, 7)}
+    light_markers = {obj.name for obj in bpy.context.scene.objects if obj.name.startswith("LIGHT_F1_")}
 
     report = {
         "glb": str(glb),
@@ -51,6 +52,7 @@ def main() -> None:
         "mesh_objects": mesh_count,
         "materials": len(materials),
         "floor_roots": len(expected_floors & floor_nodes),
+        "light_markers": len(light_markers),
         "blender_y_min": min(world_ys) if world_ys else None,
         "blender_y_max": max(world_ys) if world_ys else None,
     }
@@ -65,8 +67,10 @@ def main() -> None:
         raise SystemExit(f"Missing floor roots: {missing}")
     if glb.stat().st_size > args.max_mb * 1024 * 1024:
         raise SystemExit(f"GLB exceeds mobile budget of {args.max_mb:.1f} MB")
-    if not world_ys or min(world_ys) > -44.0:
-        raise SystemExit("Exported world is not aligned to Babylon +Z; expected Blender Y to extend below -44 m")
+    if not world_ys or min(world_ys) > -90.0:
+        raise SystemExit("v0.6 first floor does not extend to the expected 92 m school length")
+    if len(light_markers) < 20:
+        raise SystemExit(f"Expected at least 20 first-floor runtime light markers, got {len(light_markers)}")
 
 
 if __name__ == "__main__":

@@ -2,11 +2,14 @@
 
 Mobile-first psychological horror game set in a six-floor Japanese integrated middle/high school.
 
-## v0.5 — BLENDER VISUAL PASS
+## v0.6 — FIRST FLOOR SCHOOL REBUILD
 
-The vertical slice now combines the existing survival systems with a generated Blender visual layer while keeping gameplay collision and world truth engine-owned.
+The visual benchmark is now a dense, walkable first floor that reads as a Japanese school before the rest of the six-floor campus receives the same treatment.
 
-- Six-floor 3D school with Blender-authored corridor/stair visuals, floor-specific rooms, mobile floor culling, and continuous walkable stairwells
+- v0.6 first floor: six classrooms, separate toilets, student entrance/shoe lockers, staff room, principal office, infirmary, career guidance, counseling, meeting, office, print and broadcast rooms
+- Starts inside 1-6; gameplay collision and room zoning match the rebuilt 92m first-floor plan
+- Blender LIGHT_F1_* markers create distance-culled Babylon runtime lights; the flashlight and FAKER flicker affect the real PBR-lit scene
+- Upper floors remain lightweight placeholders pending the same visual pass
 - NOA read-only GameState context
 - FAKER imitation router with rotating tells
 - Strict NOA response protocol + allow-listed EventValidator
@@ -43,11 +46,11 @@ The visual-asset pipeline runs Blender headlessly in GitHub Actions. It currentl
 - Runtime: validated `school_shell.glb` is committed into `public/assets/generated/` by CI for same-repository PRs, then loaded by Babylon.js as the visual layer.
 - Fallback: legacy Babylon geometry remains available invisibly for collision and becomes visible automatically if the GLB cannot load.
 - Mobile: Blender meshes are merged by material per floor and adjacent floors render only while traversing a stairwell.
-- Current generated runtime asset: ~1.9 MB GLB, 58 mesh objects, 10 exported materials, six validated floor roots.
+- Current v0.6 generated asset: ~4.17 MB GLB, 61 merged mesh objects, 34 materials, 42 first-floor runtime light markers, six validated floor roots.
 
 ## Commands
 
-- `npm test` — bundles and runs deterministic v0.5 logic checks.
+- `npm test` — bundles and runs deterministic v0.6 logic checks.
 - `npm run typecheck` — strict TypeScript check.
 - `npm run build` — typecheck plus the production Vite/PWA build.
 

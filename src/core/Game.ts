@@ -25,6 +25,7 @@ import { PlayerController } from "../player/PlayerController";
 import { PuzzleManager } from "../puzzles/PuzzleManager";
 import { School6F } from "../world/School6F";
 import { SchoolVisuals, type SchoolVisualMode } from "../world/SchoolVisuals";
+import { FIRST_FLOOR_START } from "../world/FirstFloorLayout";
 import type { WorldInteraction } from "../world/types";
 import { ThreatController } from "../threat/ThreatController";
 import { CameraController } from "../camera/CameraController";
@@ -98,6 +99,7 @@ export class Game {
     this.visualMode = visualLoad.mode;
     if (visualLoad.mode === "blender") {
       this.school.setLegacyVisualsMuted(true);
+      this.school.setFloorLightingEnabled(1, false);
       if (bootStatus) bootStatus.textContent = `BLENDER READY · ${visualLoad.meshCount} MESHES / ${visualLoad.materialCount} MATERIALS`;
     } else if (bootStatus) {
       bootStatus.textContent = "3D FALLBACK · 校舎アセットを簡易表示で起動";
@@ -105,7 +107,7 @@ export class Game {
     }
 
     this.player = new PlayerController(this.scene, this.canvas);
-    this.player.spawn(new Vector3(0, 0.9, 6), 1);
+    this.player.spawn(new Vector3(FIRST_FLOOR_START.x, FIRST_FLOOR_START.y, FIRST_FLOOR_START.z), 1, FIRST_FLOOR_START.yaw);
 
     this.phone = new NoaPhone();
     this.noaClient = new NoaClient((signal) => this.phone.setSignal(signal));
@@ -135,6 +137,7 @@ export class Game {
 
       this.player.update(dt);
       this.school.update(now);
+      this.visuals.update(now);
       if (this.started) this.updateGame(dt);
       this.scene.render();
     });
@@ -352,7 +355,10 @@ export class Game {
   private applyAiEvent(event: NoaEvent): void {
     if (event === "none") return;
     this.director.noteEvent();
-    if (event === "flicker_lights") this.school.flickerLights(this.player.getFloor());
+    if (event === "flicker_lights") {
+      this.school.flickerLights(this.player.getFloor());
+      this.visuals.flickerLights(this.player.getFloor());
+    }
     if (event === "radio_noise") this.audio.radioNoise();
     if (event === "door_sound") this.audio.doorSound();
     if (event === "footsteps_far") this.audio.footstepsFar();
@@ -438,14 +444,14 @@ export class Game {
     const start = document.querySelector<HTMLElement>("#start-screen");
     const button = document.querySelector<HTMLButtonElement>("#enter-button");
     const status = document.querySelector<HTMLElement>("#boot-status");
-    if (status) status.textContent = this.visualMode === "blender" ? "v0.5 · BLENDER VISUALS / SURVIVAL / SIX ENDINGS" : "v0.5 · FALLBACK VISUALS / SURVIVAL";
+    if (status) status.textContent = this.visualMode === "blender" ? "v0.6 · 1F SCHOOL REBUILD / BLENDER" : "v0.6 · 1F SCHOOL REBUILD / FALLBACK";
 
     button?.addEventListener("click", async () => {
       start?.classList.add("hidden");
       await this.audio.start();
       this.started = true;
-      this.state.setObjective("6Fまで校内保守番号の手掛かりを集める");
-      this.phone.push("NOA", "接続できてる。\n\nこの校舎は6階。2Fから5Fの特別教室に、保守番号の断片があるみたい。", { mood: "calm" });
+      this.state.setObjective("1年6組を出て、1F職員室まで校内を確認する");
+      this.phone.push("NOA", "接続できてる。\n\n今いるのは1年6組。まず廊下に出て、職員室まで様子を見よう。保健室と進路指導室も1Fにある。", { mood: "calm" });
       window.setTimeout(() => {
         this.phone.push("NOA", "もし通信がおかしくなったら、私に『放課後は？』って聞いて。", { mood: "calm" });
         this.state.patchStory({ authenticationIntroduced: true });
@@ -472,15 +478,15 @@ export class Game {
   private createScene(): Scene {
     const scene = new Scene(this.engine);
     scene.clearColor = new Color4(0.006, 0.01, 0.014, 1);
-    scene.ambientColor = new Color3(0.035, 0.045, 0.05);
+    scene.ambientColor = new Color3(0.055, 0.065, 0.068);
     scene.collisionsEnabled = true;
     scene.performancePriority = ScenePerformancePriority.Intermediate;
     scene.fogMode = Scene.FOGMODE_EXP2;
-    scene.fogDensity = 0.011;
+    scene.fogDensity = 0.0065;
     scene.fogColor = new Color3(0.022, 0.03, 0.035);
 
     const hemi = new HemisphericLight("night-fill", new Vector3(0, 1, 0), scene);
-    hemi.intensity = 0.1;
+    hemi.intensity = 0.16;
     hemi.diffuse = new Color3(0.34, 0.43, 0.48);
     hemi.groundColor = new Color3(0.025, 0.03, 0.035);
 
@@ -494,8 +500,8 @@ export class Game {
     pipeline.bloomWeight = 0.13;
     pipeline.bloomKernel = 32;
     pipeline.imageProcessingEnabled = true;
-    pipeline.imageProcessing.contrast = 1.16;
-    pipeline.imageProcessing.exposure = 0.9;
+    pipeline.imageProcessing.contrast = 1.12;
+    pipeline.imageProcessing.exposure = 1.04;
     pipeline.imageProcessing.vignetteEnabled = true;
     pipeline.imageProcessing.vignetteWeight = 1.25;
     pipeline.imageProcessing.vignetteStretch = 0.15;
