@@ -54,6 +54,12 @@ jobs:
             --min-materials 6 \
             --max-mb 6
 
+      - name: Install runtime dependencies for Babylon validation
+        run: npm install --no-audit --no-fund
+
+      - name: Validate Babylon world coordinates
+        run: node tools/blender/validate_babylon.mjs build/blender/school_shell.glb
+
       - name: Write checksums
         run: |
           (
