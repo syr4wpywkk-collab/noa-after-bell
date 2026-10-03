@@ -33,25 +33,39 @@ export class MobileControls {
   private bindJoystick(): void {
     this.joystickZone?.addEventListener("pointerdown", (event) => {
       if (!this.active || this.joystickId !== null || this.phone.isOpen()) return;
+      event.preventDefault();
       this.joystickId = event.pointerId;
-      this.joystickZone?.setPointerCapture(event.pointerId);
+      try {
+        this.joystickZone?.setPointerCapture(event.pointerId);
+      } catch {
+        // iOS Safari may reject pointer capture in some browser/UI states.
+        // Window-level move/up listeners below keep the stick usable anyway.
+      }
       this.updateJoystick(event.clientX, event.clientY);
     });
 
-    this.joystickZone?.addEventListener("pointermove", (event) => {
+    window.addEventListener("pointermove", (event) => {
       if (event.pointerId !== this.joystickId) return;
+      event.preventDefault();
       this.updateJoystick(event.clientX, event.clientY);
-    });
+    }, { passive: false });
 
     const release = (event: PointerEvent) => {
       if (event.pointerId !== this.joystickId) return;
+      try {
+        if (this.joystickZone?.hasPointerCapture(event.pointerId)) {
+          this.joystickZone.releasePointerCapture(event.pointerId);
+        }
+      } catch {
+        // Safe fallback for Safari capture edge cases.
+      }
       this.joystickId = null;
       this.player.setMoveVector(0, 0);
       if (this.joystickKnob) this.joystickKnob.style.transform = "translate(0, 0)";
     };
 
-    this.joystickZone?.addEventListener("pointerup", release);
-    this.joystickZone?.addEventListener("pointercancel", release);
+    window.addEventListener("pointerup", release);
+    window.addEventListener("pointercancel", release);
   }
 
   private updateJoystick(x: number, y: number): void {
@@ -76,27 +90,41 @@ export class MobileControls {
   private bindLook(): void {
     this.lookZone?.addEventListener("pointerdown", (event) => {
       if (!this.active || this.lookId !== null || this.phone.isOpen()) return;
+      event.preventDefault();
       this.lookId = event.pointerId;
       this.lastLookX = event.clientX;
       this.lastLookY = event.clientY;
-      this.lookZone?.setPointerCapture(event.pointerId);
+      try {
+        this.lookZone?.setPointerCapture(event.pointerId);
+      } catch {
+        // Keep looking usable even when Safari refuses capture.
+      }
     });
 
-    this.lookZone?.addEventListener("pointermove", (event) => {
+    window.addEventListener("pointermove", (event) => {
       if (event.pointerId !== this.lookId || this.phone.isOpen()) return;
+      event.preventDefault();
       const dx = event.clientX - this.lastLookX;
       const dy = event.clientY - this.lastLookY;
       this.lastLookX = event.clientX;
       this.lastLookY = event.clientY;
       this.player.look(dx, dy);
-    });
+    }, { passive: false });
 
     const release = (event: PointerEvent) => {
-      if (event.pointerId === this.lookId) this.lookId = null;
+      if (event.pointerId !== this.lookId) return;
+      try {
+        if (this.lookZone?.hasPointerCapture(event.pointerId)) {
+          this.lookZone.releasePointerCapture(event.pointerId);
+        }
+      } catch {
+        // No-op: the pointer may already have been released by Safari.
+      }
+      this.lookId = null;
     };
 
-    this.lookZone?.addEventListener("pointerup", release);
-    this.lookZone?.addEventListener("pointercancel", release);
+    window.addEventListener("pointerup", release);
+    window.addEventListener("pointercancel", release);
   }
 
   private bindButtons(): void {
