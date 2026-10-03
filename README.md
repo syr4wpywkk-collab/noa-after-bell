@@ -2,11 +2,14 @@
 
 Mobile-first psychological horror game set in a six-floor Japanese integrated middle/high school.
 
-## v0.5 — BLENDER VISUAL PASS
+## v0.6 — FIRST FLOOR SCHOOL REBUILD
 
-The vertical slice now combines the existing survival systems with a generated Blender visual layer while keeping gameplay collision and world truth engine-owned.
+The visual benchmark is now a dense, walkable first floor that reads as a Japanese school before the rest of the six-floor campus receives the same treatment.
 
-- Six-floor 3D school with Blender-authored corridor/stair visuals, floor-specific rooms, mobile floor culling, and continuous walkable stairwells
+- v0.6 first floor: six classrooms, separate toilets, student entrance/shoe lockers, staff room, principal office, infirmary, career guidance, counseling, meeting, office, print and broadcast rooms
+- Starts inside 1-6; gameplay collision and room zoning match the rebuilt 92m first-floor plan
+- Blender LIGHT_F1_* markers create distance-culled Babylon runtime lights; the flashlight and FAKER flicker affect the real PBR-lit scene
+- Upper floors remain lightweight placeholders pending the same visual pass
 - NOA read-only GameState context
 - FAKER imitation router with rotating tells
 - Strict NOA response protocol + allow-listed EventValidator
@@ -47,7 +50,7 @@ The visual-asset pipeline runs Blender headlessly in GitHub Actions. It currentl
 
 ## Commands
 
-- `npm test` — bundles and runs deterministic v0.5 logic checks.
+- `npm test` — bundles and runs deterministic v0.6 logic checks.
 - `npm run typecheck` — strict TypeScript check.
 - `npm run build` — typecheck plus the production Vite/PWA build.
 
