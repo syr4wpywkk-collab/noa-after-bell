@@ -2,9 +2,9 @@
 
 Mobile-first psychological horror game set in a six-floor Japanese integrated middle/high school.
 
-## v0.3 — TRUST / FAKER
+## v0.4 — SURVIVAL SYSTEMS
 
-The game now treats trust as a gameplay system rather than a chat feature.
+The vertical slice now connects trust to stealth, evidence, storage pressure, and deterministic escape routes.
 
 - Six-floor 3D school with floor-specific rooms and mobile floor culling
 - NOA read-only GameState context
@@ -14,7 +14,11 @@ The game now treats trust as a gameplay system rather than a chat feature.
 - In-phone free-text NOA chat with latency/signal presentation
 - Deterministic local NOA fallback when `/api/noa` is unavailable
 - Server-only OpenAI Responses API integration via `OPENAI_API_KEY`
-- Four-floor clue puzzle → 6F maintenance terminal → two EXIT endings
+- Signal-driven threat state machine: light, movement, sprinting, and notifications affect detection
+- Danger Quick Ask, normal short chat, and a safe free-chat zone in the 5F study booths
+- IndexedDB camera album with a simulated 150 MB quota and non-destructive mutation overlays
+- Deterministic evidence metadata, three-trip mat route, NO SIGNAL mode, and six ending definitions
+- Four-floor clue puzzle → 6F maintenance terminal → expanded ending routes
 - Authentication phrase that becomes unreliable later
 - Optional Supabase session memory endpoint/schema
 - PWA manifest + service worker
@@ -25,6 +29,14 @@ The game now treats trust as a gameplay system rather than a chat feature.
 2. Collect four digits in floor order.
 3. Enter the code at the 6F maintenance terminal.
 4. Return to the 1F gym and choose between EXIT A and EXIT B while NOA / FAKER messaging diverges.
+
+Evidence photos near marked clues contribute to the true-ending state. The blue mats in the 1F gym store can be carried to the courtyard in three trips; this deliberately obstructs the view and disables sprinting/chat. Its 6F resolution is an abstract, explicitly fictional game sequence, not a real-world safety simulation.
+
+## Commands
+
+- `npm test` — bundles and runs deterministic v0.4 logic checks.
+- `npm run typecheck` — strict TypeScript check.
+- `npm run build` — typecheck plus the production Vite/PWA build.
 
 ## Environment variables
 

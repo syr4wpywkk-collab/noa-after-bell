@@ -1,4 +1,7 @@
 import type { FloorId } from "./WorldLayout";
+import type { ThreatSnapshot } from "../threat/ThreatState";
+
+export type EvidenceId = "chemistry_blackboard" | "staff_seating_chart" | "electrical_wiring" | "old_school_map";
 
 export type StoryFlags = {
   heardBell: boolean;
@@ -33,11 +36,7 @@ export type GameSnapshot = {
     moving: boolean;
   };
   nearby: string[];
-  threat: {
-    level: number;
-    distance: number;
-    visible: boolean;
-  };
+  threat: ThreatSnapshot & { level: number };
   horror: {
     tension: number;
     recentScares: number;
@@ -51,6 +50,11 @@ export type GameSnapshot = {
     solved: string[];
     finalCodeReady: boolean;
   };
+  evidence: EvidenceId[];
+  matRoute: { discovered: boolean; matsAvailable: number; matsPlaced: number; carrying: boolean; courtyardPrepared: boolean };
+  connection: { manuallyDisconnected: boolean };
+  safeZone: boolean;
+  endingFlags: { fakerRouteDepth: number; falseExitSeen: boolean; mapContradiction: boolean };
 };
 
 function clamp01(value: number): number {
@@ -69,7 +73,7 @@ export class GameState {
   private objective = "校舎を確認する";
   private nearby: string[] = [];
   private player = { flashlight: true, stamina: 100, moving: false };
-  private threat = { level: 0.12, distance: 32, visible: false };
+  private threat: GameSnapshot["threat"] = { mode: "DORMANT", awareness: 0, level: 0.12, distance: 32, visible: false, investigating: false, pursuitActive: false };
   private horror = { tension: 0.08, recentScares: 0, silenceDuration: 0, pursuitActive: false };
   private story: StoryFlags = {
     heardBell: true,
@@ -91,6 +95,11 @@ export class GameState {
   };
   private clues = new Set<string>();
   private solved = new Set<string>();
+  private evidence = new Set<EvidenceId>();
+  private matRoute = { discovered: false, matsAvailable: 3, matsPlaced: 0, carrying: false, courtyardPrepared: false };
+  private connection = { manuallyDisconnected: false };
+  private safeZone = false;
+  private endingFlags = { fakerRouteDepth: 0, falseExitSeen: false, mapContradiction: false };
 
   getSessionId(): string {
     return this.sessionId;
@@ -140,9 +149,21 @@ export class GameState {
     this.threat = {
       level: clamp01(level),
       distance: Math.max(0, distance),
-      visible,
+      visible, mode: this.threat.mode, awareness: this.threat.awareness,
+      investigating: this.threat.investigating, pursuitActive: this.threat.pursuitActive,
     };
   }
+
+  setThreatSnapshot(threat: ThreatSnapshot): void { this.threat = { ...threat, level: clamp01(threat.awareness) }; }
+
+  setSafeZone(value: boolean): void { this.safeZone = value; }
+  addEvidence(id: EvidenceId): void { this.evidence.add(id); }
+  hasEvidence(id: EvidenceId): boolean { return this.evidence.has(id); }
+  setDisconnected(value: boolean): void { this.connection.manuallyDisconnected = value; }
+  patchEndingFlags(patch: Partial<GameSnapshot["endingFlags"]>): void { this.endingFlags = { ...this.endingFlags, ...patch }; }
+  discoverMatRoute(): void { this.matRoute.discovered = true; }
+  takeMat(): boolean { if (this.matRoute.carrying || this.matRoute.matsAvailable <= 0) return false; this.matRoute.carrying = true; this.matRoute.matsAvailable--; return true; }
+  placeMat(required = 3): boolean { if (!this.matRoute.carrying) return false; this.matRoute.carrying = false; this.matRoute.matsPlaced++; this.matRoute.courtyardPrepared = this.matRoute.matsPlaced >= required; return true; }
 
   setHorror(input: GameSnapshot["horror"]): void {
     this.horror = {
@@ -200,6 +221,11 @@ export class GameState {
         solved: [...this.solved],
         finalCodeReady: this.story.terminalUnlocked,
       },
+      evidence: [...this.evidence],
+      matRoute: { ...this.matRoute },
+      connection: { ...this.connection },
+      safeZone: this.safeZone,
+      endingFlags: { ...this.endingFlags },
     };
   }
 }

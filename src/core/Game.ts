@@ -25,6 +25,19 @@ import { PlayerController } from "../player/PlayerController";
 import { PuzzleManager } from "../puzzles/PuzzleManager";
 import { School6F } from "../world/School6F";
 import type { WorldInteraction } from "../world/types";
+import { ThreatController } from "../threat/ThreatController";
+import { CameraController } from "../camera/CameraController";
+import { PhotoStore } from "../camera/PhotoStore";
+import { AlbumUI } from "../ui/AlbumUI";
+import { CameraUI } from "../ui/CameraUI";
+import { StorageUI } from "../ui/StorageUI";
+import { CORRUPTED_PHOTO_SIZE_MB } from "../camera/StorageQuota";
+import { mutationForProgress } from "../camera/PhotoMutation";
+import type { EvidenceId } from "../game/GameState";
+import { MatTransportController } from "../mat/MatTransportController";
+import { MatOverlay } from "../mat/MatOverlay";
+import { EndingController } from "../endings/EndingController";
+import { ENDINGS, type EndingId } from "../endings/EndingDefinitions";
 
 export class Game {
   private engine: Engine;
@@ -40,14 +53,25 @@ export class Game {
   private readonly faker = new FakerRouter();
   private readonly memory = new SessionMemory();
   private readonly audio = new AudioManager();
+  private readonly threat = new ThreatController();
+  private footstepCooldown = 0;
   private noaClient!: NoaClient;
   private lastFrame = performance.now();
   private currentInteraction: WorldInteraction | null = null;
   private lastInteractionAt = 0;
   private fakeFollowupTimer?: number;
   private started = false;
+  private readonly camera: CameraController;
+  private readonly photos = new PhotoStore();
+  private album!: AlbumUI;
+  private readonly cameraUi = new CameraUI();
+  private readonly storageUi = new StorageUI();
+  private readonly mats = new MatTransportController(this.state);
+  private readonly matOverlay = new MatOverlay();
+  private readonly endings = new EndingController();
 
   constructor(private canvas: HTMLCanvasElement) {
+    this.camera = new CameraController(canvas);
     const dpr = window.devicePixelRatio || 1;
     this.engine = new Engine(canvas, true, {
       preserveDrawingBuffer: false,
@@ -72,6 +96,16 @@ export class Game {
     this.puzzles = new PuzzleManager(this.state, this.phone);
     this.mobile = new MobileControls(this.player, this.phone, () => this.interact());
     this.phone.setSubmitHandler((text) => this.handleNoaInput(text));
+    await this.photos.open().catch(() => this.phone.notify("アルバムを一時メモリで起動"));
+    this.album = new AlbumUI(this.photos, () => this.state.getChapter());
+    document.querySelector("#camera-button")?.addEventListener("click", () => void this.capturePhoto());
+    document.querySelector("#album-button")?.addEventListener("click", () => this.album.toggle(true));
+    document.querySelector("#disconnect-button")?.addEventListener("click", () => {
+      this.state.setDisconnected(true);
+      this.phone.setSignal("offline");
+      this.phone.toggle(false);
+      this.phone.notify("NO SIGNAL — NOA / FAKER通信を切断");
+    });
 
     this.bindDesktopActions();
     this.bindTerminal();
@@ -88,6 +122,32 @@ export class Game {
       if (this.started) this.updateGame(dt);
       this.scene.render();
     });
+  }
+
+  private async capturePhoto(): Promise<void> {
+    if (!this.started) return;
+    try {
+      const blob = await this.camera.capture();
+      const snapshot = this.state.snapshot();
+      const evidence = this.evidenceForNearbyInteraction();
+      await this.photos.save({ blob, floor: snapshot.floor, location: snapshot.location, evidenceId: evidence });
+      if (evidence) {
+        this.state.addEvidence(evidence);
+        if (evidence === "old_school_map") this.state.patchEndingFlags({ mapContradiction: true });
+      }
+      this.cameraUi.flash(); this.phone.notify(evidence ? "証拠写真を保存" : "写真を保存", 1300);
+    } catch (error) {
+      if (error instanceof Error && error.message === "virtual_storage_full") this.storageUi.showFull(this.photos.usedMb());
+      else this.phone.notify("撮影に失敗しました");
+    }
+  }
+
+  private evidenceForNearbyInteraction(): EvidenceId | undefined {
+    const ids: Record<string, EvidenceId> = {
+      clue_4f_math: "chemistry_blackboard", clue_2f_library: "staff_seating_chart",
+      mat_storage_1f: "electrical_wiring", clock_6f: "old_school_map",
+    };
+    return this.currentInteraction ? ids[this.currentInteraction.id] : undefined;
   }
 
   private updateGame(dt: number): void {
@@ -115,8 +175,22 @@ export class Game {
       silenceDuration: horror.silenceDuration,
       pursuitActive: horror.pursuitActive,
     });
-    this.state.setThreat(horror.threatLevel, horror.threatDistance, false);
+    const safeZone = floor === 5 && zone.includes("special_room");
+    this.state.setSafeZone(safeZone);
+    this.footstepCooldown -= dt;
+    if (this.player.isMoving() && this.footstepCooldown <= 0) {
+      this.threat.hear({ floor, x: position.x, z: position.z, strength: this.player.isSprinting() ? 16 : 7, kind: this.player.isSprinting() ? "sprint" : "footstep" });
+      this.footstepCooldown = this.player.isSprinting() ? 0.34 : 0.72;
+    }
+    const threat = this.threat.update(dt, {
+      floor, x: position.x, z: position.z, flashlight: this.player.isFlashlightOn(),
+      moving: this.player.isMoving(), sprinting: this.player.isSprinting(), hiding: false,
+      safeZone, lineOfSight: true,
+    }, horror.threatLevel);
+    this.state.setThreatSnapshot(threat);
+    this.director.setPursuitActive(threat.pursuitActive);
     snapshot = this.state.snapshot();
+    this.phone.setMode(threat.pursuitActive ? "danger" : safeZone ? "safe" : "normal");
 
     this.currentInteraction = this.school.getNearbyInteraction(position, floor);
     this.updateHud(snapshot);
@@ -187,11 +261,35 @@ export class Game {
 
     const action = this.puzzles.handle(interaction);
     if (action.type === "terminal") this.openTerminal();
-    if (action.type === "ending") this.showEnding(action.ending);
+    if (action.type === "ending") this.showEnding(this.endings.resolveFrontExit(this.state.snapshot(), action.ending === "B"));
+    if (interaction.kind === "mat_pickup") {
+      if (this.mats.pickup()) { this.setMatCarrying(true); this.phone.notify("マット運搬中：視界・通信・走行制限"); }
+      else this.phone.notify("運べるマットは残っていない");
+    }
+    if (interaction.kind === "mat_place" && this.mats.place()) {
+      this.setMatCarrying(false);
+      this.phone.notify(`中庭準備 ${this.state.snapshot().matRoute.matsPlaced}/3`);
+    }
+    if (interaction.kind === "dive_route") {
+      if (this.endings.canTrigger("ENDING_03_CRITICAL", this.state.snapshot())) this.beginCriticalEnding();
+      else this.phone.notify("中庭の目標地点を準備できていない");
+    }
+  }
+
+  private setMatCarrying(carrying: boolean): void {
+    this.matOverlay.setCarrying(carrying);
+    this.player.setCarryingObstruction(carrying);
+    if (carrying) this.phone.toggle(false);
+  }
+
+  private beginCriticalEnding(): void {
+    const accepted = window.confirm("FICTIONAL ROUTE / 中庭のマーカーに照準を合わせますか？\n現実の安全行動を再現するものではありません。");
+    if (accepted) this.showEnding("ENDING_03_CRITICAL");
   }
 
   private async handleNoaInput(text: string): Promise<void> {
     const before = this.state.snapshot();
+    if (before.connection.manuallyDisconnected) { this.phone.notify("NO SIGNAL — 手動切断中"); return; }
     this.phone.push("YOU", text, { user: true });
     this.memory.record("user", text, before.gameTimeMs);
 
@@ -217,7 +315,7 @@ export class Game {
     const delay = Math.max(80, Math.min(3000, response.delayMs));
     await new Promise((resolve) => window.setTimeout(resolve, delay));
 
-    const visual = response.source === "faker" ? this.visualForFaker(this.faker.state.nextClue()) : { mood: response.mood };
+    const visual = response.source === "faker" ? this.visualForFaker(this.faker.state.nextClue(before.chapter)) : { mood: response.mood };
     const author = response.source === "faker" && visual.author ? visual.author : "NOA";
     const streamDelay = response.source === "faker" && this.faker.state.imitationLevel < 0.72 ? 7 : 18;
     await this.phone.pushStreamed(author, response.message, visual, streamDelay);
@@ -225,6 +323,16 @@ export class Game {
 
     const event = this.validator.validate(response, this.state.snapshot());
     this.applyAiEvent(event);
+    if (response.source === "faker" && before.chapter >= 5) {
+      const depth = before.endingFlags.fakerRouteDepth + 1;
+      this.state.patchEndingFlags({ fakerRouteDepth: depth });
+      if (depth >= 3) { this.showEnding("ENDING_02_MISSING"); return; }
+    }
+    const current = this.state.snapshot();
+    if (!current.safeZone) {
+      const position = this.player.getPosition();
+      this.threat.hear({ floor: current.floor, x: position.x, z: position.z, strength: 11, kind: "notification" });
+    }
     void this.memory.persist(this.state.snapshot());
   }
 
@@ -243,6 +351,21 @@ export class Game {
     if (event === "door_sound") this.audio.doorSound();
     if (event === "footsteps_far") this.audio.footstepsFar();
     if (event === "objective_hint") this.phone.notify("NOAが周辺情報を照合中…", 1500);
+    if (event === "phone_notification_noise") {
+      const p = this.player.getPosition();
+      this.threat.hear({ floor: this.player.getFloor(), x: p.x, z: p.z, strength: 14, kind: "notification" });
+    }
+    if (event === "faker_corrupt_photo") void this.addCorruptedPhoto();
+  }
+
+  private async addCorruptedPhoto(): Promise<void> {
+    try {
+      const blob = await this.camera.capture();
+      const snapshot = this.state.snapshot();
+      const seedId = `${snapshot.sessionId}-${this.photos.list().length}`;
+      await this.photos.save({ blob, floor: snapshot.floor, location: "不明", corrupted: true, virtualSizeMb: CORRUPTED_PHOTO_SIZE_MB, mutations: mutationForProgress(seedId, snapshot.chapter, true) });
+      this.phone.notify("アルバムの使用容量が変化しました");
+    } catch { this.storageUi.showFull(this.photos.usedMb()); }
   }
 
   private triggerFirstFaker(): void {
@@ -309,7 +432,7 @@ export class Game {
     const start = document.querySelector<HTMLElement>("#start-screen");
     const button = document.querySelector<HTMLButtonElement>("#enter-button");
     const status = document.querySelector<HTMLElement>("#boot-status");
-    if (status) status.textContent = "v0.3 · TRUST / FAKER · 6F CAMPUS";
+    if (status) status.textContent = "v0.4 · SURVIVAL / CAMERA / SIX ENDINGS";
 
     button?.addEventListener("click", async () => {
       start?.classList.add("hidden");
@@ -328,18 +451,15 @@ export class Game {
     }, { once: true });
   }
 
-  private showEnding(ending: "A" | "B"): void {
+  private showEnding(ending: EndingId): void {
     this.player.setActive(false);
     this.mobile.setActive(false);
     const screen = document.querySelector<HTMLElement>("#ending-screen");
     const title = document.querySelector<HTMLElement>("#ending-title");
     const copy = document.querySelector<HTMLElement>("#ending-copy");
-    if (title) title.textContent = ending === "A" ? "SIGNAL" : "AFTER BELL";
-    if (copy) {
-      copy.innerHTML = ending === "A"
-        ? "非常口Aを押した。<br>NOAの表示は、最後まで消えなかった。<br><br>それが本物だった証拠はない。"
-        : "非常口Bを押した。<br>扉の向こうで、同じ通知音が二度鳴った。<br><br>どちらが先だったか思い出せない。";
-    }
+    const definition = ENDINGS[ending];
+    if (title) title.textContent = `${definition.number} — ${definition.title}`;
+    if (copy) copy.textContent = definition.copy;
     screen?.classList.remove("hidden");
   }
 

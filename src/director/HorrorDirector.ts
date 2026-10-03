@@ -19,6 +19,8 @@ export class HorrorDirector {
   private firstFakerTriggered = false;
   private pursuitActive = false;
 
+  setPursuitActive(active: boolean): void { this.pursuitActive = active; }
+
   update(dt: number, snapshot: GameSnapshot): HorrorDirectorState {
     this.silenceDuration += dt;
     this.scareAges = this.scareAges.map((age) => age + dt).filter((age) => age < 70);

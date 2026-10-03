@@ -38,6 +38,13 @@ button { color:inherit; }
 #interact-button.available { opacity:1; box-shadow:0 0 22px rgba(145,225,214,.15),0 8px 24px rgba(0,0,0,.3); }
 #flashlight-button { right:max(20px,env(safe-area-inset-right)); bottom:max(84px,calc(env(safe-area-inset-bottom) + 64px)); }
 #phone-button { right:max(20px,env(safe-area-inset-right)); bottom:max(24px,env(safe-area-inset-bottom)); font-size:11px; letter-spacing:.12em; }
+#camera-button { right:max(88px,calc(env(safe-area-inset-right) + 68px)); bottom:max(24px,env(safe-area-inset-bottom)); font-size:10px; }
+#album-button { right:max(156px,calc(env(safe-area-inset-right) + 136px)); bottom:max(24px,env(safe-area-inset-bottom)); font-size:9px; }
+#camera-flash { position:fixed; inset:0; z-index:40; pointer-events:none; background:#eaffff; opacity:0; transition:opacity .22s; } #camera-flash.active{opacity:.84;transition:none}
+#album-panel { position:fixed; z-index:17; inset:max(10px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left)); padding:18px; border:1px solid var(--line); border-radius:24px; background:rgba(3,8,10,.97); transform:translateY(110%); transition:transform .25s; overflow:auto; }
+#album-panel.open { transform:translateY(0); } #album-panel header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px} #album-panel button,#storage-warning button{padding:8px 13px;border:1px solid var(--line);border-radius:10px;background:rgba(255,255,255,.06)}
+#album-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}.photo-card{position:relative;padding:7px;border:1px solid var(--line);border-radius:13px;background:#071012;overflow:hidden}.photo-card img{width:100%;aspect-ratio:16/9;object-fit:cover}.photo-card small{display:block;margin:6px 0;color:var(--muted)}.photo-card button{width:100%}.photo-mutation{position:absolute;inset:7px 7px 48px;pointer-events:none}.photo-mutation.figure::after{content:"";position:absolute;left:68%;top:24%;width:5%;height:34%;border-radius:50% 50% 30% 30%;background:rgba(0,0,0,.48);filter:blur(2px)}.photo-mutation.clock::after{content:"00:04";position:absolute;right:8%;top:10%;color:rgba(220,235,225,.46);font:9px monospace}.photo-mutation.door{box-shadow:inset -22px 0 rgba(0,0,0,.24)}
+#storage-warning{position:fixed;z-index:45;inset:0;display:none;place-items:center;padding:24px;background:rgba(0,0,0,.72)}#storage-warning.open{display:grid}#storage-warning>div{width:min(360px,92vw);padding:24px;border:1px solid var(--line);border-radius:22px;background:#071012;text-align:center}#storage-warning p{color:var(--muted)}
 #phone { position:fixed; z-index:12; right:16px; top:50%; width:min(330px,82vw); height:min(540px,80vh); transform:translateY(-50%) translateX(120%); transition:transform .24s cubic-bezier(.2,.8,.2,1); pointer-events:auto; border:1px solid rgba(255,255,255,.19); border-radius:31px; background:linear-gradient(180deg,rgba(7,13,16,.985),rgba(2,6,8,.99)); box-shadow:0 28px 90px rgba(0,0,0,.7); overflow:hidden; }
 #phone.open { transform:translateY(-50%) translateX(0); }
 .phone-island { position:absolute; top:9px; left:50%; transform:translateX(-50%); width:88px; height:22px; border-radius:16px; background:#000; }
@@ -61,9 +68,16 @@ button { color:inherit; }
 #phone-typing span:nth-child(2) { animation-delay:.14s; } #phone-typing span:nth-child(3) { animation-delay:.28s; }
 @keyframes typing { 0%,60%,100%{transform:translateY(0);opacity:.35} 30%{transform:translateY(-4px);opacity:1} }
 #phone-form { position:absolute; left:14px; right:14px; bottom:14px; display:flex; gap:8px; }
+#quick-ask { position:absolute; left:14px; right:14px; bottom:68px; display:none; grid-template-columns:repeat(3,1fr); gap:5px; }
+#quick-ask button { min-height:34px; border:1px solid rgba(255,255,255,.1); border-radius:10px; background:rgba(120,205,195,.08); color:#dbe9e8; font-size:10px; }
+#phone[data-mode="danger"] #quick-ask { display:grid; }
+#phone[data-mode="danger"] #phone-feed { bottom:150px; }
+#phone[data-mode="danger"] #phone-form { opacity:.52; }
 #phone-input { min-width:0; flex:1; height:48px; padding:0 14px; border:1px solid rgba(255,255,255,.09); border-radius:15px; outline:none; color:#eaf3f3; background:rgba(255,255,255,.045); }
 #phone-input::placeholder { color:#687779; }
 #phone-form button { width:48px; height:48px; border:1px solid rgba(255,255,255,.12); border-radius:15px; background:rgba(139,220,210,.09); }
+#disconnect-button{position:absolute;right:20px;top:61px;border:0;background:none;color:#667779;font-size:8px;letter-spacing:.08em}
+#mat-overlay{display:none;position:fixed;z-index:10;inset:0;pointer-events:none;background:linear-gradient(100deg,#06163e,#0b2e70 45%,#071c50);box-shadow:inset 0 0 80px #010719}.carrying-mat #mat-overlay{display:block}.mat-top-slit,.mat-floor-slit{position:absolute;left:12%;right:12%;height:2%;background:rgba(0,0,0,.92);box-shadow:0 0 10px #8bb4c8}.mat-top-slit{top:7%}.mat-floor-slit{bottom:5%}#mat-overlay i{position:absolute;right:max(7px,env(safe-area-inset-right));top:50%;width:4px;height:4px;border-radius:50%;background:#65e9d1;animation:signal-blink 1.2s infinite}.carrying-mat #phone-button,.carrying-mat #camera-button,.carrying-mat #album-button,.carrying-mat #flashlight-button{display:none}
 .screen-panel { position:fixed; z-index:20; inset:0; display:flex; align-items:center; justify-content:center; padding:28px; text-align:center; background:radial-gradient(circle at 50% 44%,rgba(24,39,42,.88),rgba(5,9,11,.985) 42%,#010203 100%); transition:opacity .3s ease; }
 #start-screen.hidden { display:flex !important; opacity:0; pointer-events:none; }
 .start-card { width:min(470px,92vw); }
@@ -85,3 +99,4 @@ h2 { font-size:clamp(40px,10vw,70px); }
 #rotate-hint { display:none; position:fixed; z-index:30; left:50%; bottom:max(12px,env(safe-area-inset-bottom)); transform:translateX(-50%); padding:7px 11px; border-radius:999px; background:rgba(2,6,8,.72); color:#9eacad; font-size:10px; pointer-events:none; }
 @media (pointer:fine) { #joystick-zone,#look-zone{display:none} #interact-button{bottom:134px} #flashlight-button{bottom:78px} #phone-button{bottom:22px} }
 @media (orientation:portrait) and (pointer:coarse) { #rotate-hint{display:block} #joystick-base{width:104px;height:104px} #joystick-knob{left:30px;top:30px;width:44px;height:44px} #phone{height:70vh} #objective{max-width:65vw} }
+@media (orientation:landscape) and (max-height:500px) { #phone{height:94vh;width:min(430px,52vw);right:max(8px,env(safe-area-inset-right));border-radius:22px} #phone-feed{top:72px} #phone-header{top:31px}.phone-island{top:5px;height:17px} #phone-signal{top:51px} #joystick-base{width:96px;height:96px;bottom:max(10px,env(safe-area-inset-bottom))} #joystick-knob{left:28px;top:28px;width:40px;height:40px} #interact-button{bottom:118px} #flashlight-button{bottom:62px}.hud-button{height:42px} }

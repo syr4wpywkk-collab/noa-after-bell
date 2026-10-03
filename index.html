@@ -13,6 +13,7 @@
   <div id="app">
     <canvas id="renderCanvas" tabindex="0" aria-label="NOA: AFTER BELL"></canvas>
     <div id="grain"></div>
+    <div id="mat-overlay"><span class="mat-top-slit"></span><span class="mat-floor-slit"></span><i></i></div>
 
     <div id="hud">
       <div id="topbar">
@@ -32,6 +33,8 @@
       <button class="hud-button action-round" id="interact-button" type="button" aria-label="調べる">◎</button>
       <button class="hud-button action-round" id="flashlight-button" type="button" aria-label="懐中電灯">🔦</button>
       <button class="hud-button" id="phone-button" type="button">NOA</button>
+      <button class="hud-button" id="camera-button" type="button" aria-label="撮影">CAM</button>
+      <button class="hud-button" id="album-button" type="button">ALBUM</button>
     </div>
 
     <aside id="phone" aria-hidden="true">
@@ -47,7 +50,11 @@
         <input id="phone-input" maxlength="180" placeholder="NOAに聞く…" aria-label="NOAへのメッセージ" />
         <button type="submit" aria-label="送信">↑</button>
       </form>
+      <button id="disconnect-button" type="button">通信を手動で切断</button>
     </aside>
+    <div id="camera-flash"></div>
+    <section id="album-panel" aria-label="証拠アルバム"><header><strong>ALBUM / 150MB</strong><button id="album-close">閉じる</button></header><div id="album-grid"></div></section>
+    <section id="storage-warning"><div><div class="eyebrow">NOA GAME STORAGE</div><h3>写真を保存できません</h3><p data-storage-value></p><p>アルバムから不要な写真を削除してください。</p><button onclick="this.closest('#storage-warning').classList.remove('open')">確認</button></div></section>
 
     <section id="terminal-panel" aria-hidden="true">
       <div class="terminal-card">
@@ -64,7 +71,7 @@
 
     <section id="start-screen" class="screen-panel">
       <div class="start-card">
-        <div class="eyebrow">MOBILE-FIRST PSYCHOLOGICAL HORROR / v0.3</div>
+        <div class="eyebrow">MOBILE-FIRST PSYCHOLOGICAL HORROR / v0.4</div>
         <h1>NOA:<br /><span>AFTER BELL</span></h1>
         <p>6階建ての中高一貫校。<br />頼れるのは、画面の向こうのNOAだけ。</p>
         <button id="enter-button" class="primary-button" type="button">校舎に入る</button>

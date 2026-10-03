@@ -24,6 +24,9 @@ export class PlayerController {
   private floor: FloorId = 1;
   private stamina = 100;
   private moving = false;
+  private sprinting = false;
+  private sprintAllowed = true;
+  private movementScale = 1;
 
   constructor(private scene: Scene, private canvas: HTMLCanvasElement) {
     this.collider = MeshBuilder.CreateBox("player-collider", {
@@ -143,8 +146,9 @@ export class PlayerController {
     }
 
     const wantsSprint = this.keys.has("ShiftLeft") || this.keys.has("ShiftRight");
-    const sprinting = wantsSprint && this.stamina > 2 && magnitude > 0.2;
-    const speed = sprinting ? 4.55 : 2.85;
+    const sprinting = this.sprintAllowed && wantsSprint && this.stamina > 2 && magnitude > 0.2;
+    this.sprinting = sprinting;
+    const speed = (sprinting ? 4.55 : 2.85) * this.movementScale;
     this.stamina = sprinting
       ? Math.max(0, this.stamina - dt * 11)
       : Math.min(100, this.stamina + dt * 6.5);
@@ -158,6 +162,14 @@ export class PlayerController {
     if (this.moving) this.collider.moveWithCollisions(displacement);
 
     this.collider.position.y = floorBaseY(this.floor) + 0.9;
+  }
+
+  isSprinting(): boolean { return this.sprinting; }
+  setSprintAllowed(allowed: boolean): void { this.sprintAllowed = allowed; if (!allowed) this.sprinting = false; }
+  setCarryingObstruction(carrying: boolean): void {
+    this.setSprintAllowed(!carrying);
+    this.movementScale = carrying ? 0.58 : 1;
+    this.flashlight.direction = carrying ? new Vector3(0, -0.82, 0.3) : new Vector3(0, 0, 1);
   }
 
   private syncRotation(): void {

@@ -2,7 +2,9 @@ export type FakerClue =
   | { kind: "author"; author: "NOA." }
   | { kind: "clock"; minuteOffset: 1 }
   | { kind: "signal"; signal: "100%" }
-  | { kind: "glitch"; glitch: true };
+  | { kind: "glitch"; glitch: true }
+  | { kind: "timing"; delayMs: 40 }
+  | { kind: "contradiction"; field: "route" };
 
 export class FakerState {
   imitationLevel = 0.12;
@@ -24,13 +26,13 @@ export class FakerState {
     this.imitationLevel = Math.max(this.imitationLevel, 0.72);
   }
 
-  nextClue(): FakerClue {
-    const clues: FakerClue[] = [
+  nextClue(chapter: number = 2): FakerClue {
+    const clues: FakerClue[] = chapter <= 2 ? [
       { kind: "author", author: "NOA." },
       { kind: "clock", minuteOffset: 1 },
-      { kind: "signal", signal: "100%" },
-      { kind: "glitch", glitch: true },
-    ];
+    ] : chapter === 3 ? [{ kind: "timing", delayMs: 40 }, { kind: "signal", signal: "100%" }]
+      : chapter === 4 ? [{ kind: "glitch", glitch: true }, { kind: "timing", delayMs: 40 }]
+        : [{ kind: "contradiction", field: "route" }, { kind: "signal", signal: "100%" }];
     const clue = clues[this.clueCursor % clues.length];
     this.clueCursor += 1;
     return clue;

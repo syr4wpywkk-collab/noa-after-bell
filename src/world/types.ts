@@ -7,7 +7,10 @@ export type InteractionKind =
   | "terminal"
   | "clock"
   | "exit_a"
-  | "exit_b";
+  | "exit_b"
+  | "mat_pickup"
+  | "mat_place"
+  | "dive_route";
 
 export type WorldInteraction = {
   id: string;
