@@ -11,7 +11,7 @@ import {
 } from "@babylonjs/core";
 import { FLOOR_HEIGHT, FLOORS, floorBaseY, getFloorDefinition, type FloorId } from "../game/WorldLayout";
 import type { WorldInteraction } from "./types";
-import { STAIR_INTERACTION_RADIUS, stairInteractionPoint } from "./StairNavigation";
+import { STAIR_STEP_COUNT, STAIRWELLS, isInStairwell, stairProgressZ, stairRunLength } from "./StairNavigation";
 
 export class School6F {
   private roots = new Map<FloorId, TransformNode>();
@@ -41,15 +41,26 @@ export class School6F {
   }
 
   setActiveFloor(floor: FloorId): void {
-    this.activeFloor = floor;
-    for (const [id, root] of this.roots) root.setEnabled(id === floor);
-    for (const [id, lights] of this.lights) {
-      for (const light of lights) light.setEnabled(id === floor);
-    }
+    this.applyFloorVisibility(floor, false);
+  }
+
+  setPlayerContext(floor: FloorId, position: Vector3): void {
+    this.applyFloorVisibility(floor, isInStairwell(position.x, position.z));
   }
 
   getActiveFloor(): FloorId {
     return this.activeFloor;
+  }
+
+  private applyFloorVisibility(floor: FloorId, includeAdjacent: boolean): void {
+    this.activeFloor = floor;
+    for (const [id, root] of this.roots) {
+      root.setEnabled(id === floor || (includeAdjacent && Math.abs(id - floor) <= 1));
+    }
+    for (const [id, lights] of this.lights) {
+      const enabled = id === floor || (includeAdjacent && Math.abs(id - floor) <= 1);
+      for (const light of lights) light.setEnabled(enabled);
+    }
   }
 
   update(now: number): void {
@@ -83,9 +94,7 @@ export class School6F {
       const dx = interaction.x - position.x;
       const dz = interaction.z - position.z;
       const distance = Math.hypot(dx, dz);
-      const isStair = interaction.kind === "stairs_up" || interaction.kind === "stairs_down";
-      const allowedDistance = isStair ? Math.max(maxDistance, STAIR_INTERACTION_RADIUS) : maxDistance;
-      if (distance < allowedDistance && distance < bestDistance) {
+      if (distance < maxDistance && distance < bestDistance) {
         best = interaction;
         bestDistance = distance;
       }
@@ -187,37 +196,87 @@ export class School6F {
   }
 
   private buildStairs(floor: FloorId, root: TransformNode): void {
-    const stepMat = this.pbr(`stairs-${floor}`, new Color3(0.20, 0.22, 0.21), 0.9);
-    for (const [side, baseZ] of [["north", 1.4], ["south", 38.6]] as const) {
-      for (let i = 0; i < 7; i++) {
-        const direction = side === "north" ? 1 : -1;
+    const stairMat = this.pbr(`stairs-${floor}`, new Color3(0.17, 0.19, 0.18), 0.92);
+    const landingMat = this.pbr(`stair-landings-${floor}`, new Color3(0.12, 0.16, 0.15), 0.82);
+    const railMat = this.pbr(`stair-rails-${floor}`, new Color3(0.10, 0.12, 0.12), 0.62, 0.22);
+
+    for (const side of ["north", "south"] as const) {
+      const stair = STAIRWELLS[side];
+      const runLength = stairRunLength(side);
+      const midZ = (stair.lowerZ + stair.upperZ) / 2;
+
+      // Every floor gets a flat return lane and two cross-landings. The ramp
+      // lives in the opposite lane, producing a compact switchback stairwell
+      // without cutting holes through the existing corridor floor meshes.
+      this.box(
+        root,
+        `f${floor}-${side}-return`,
+        new Vector3(1.48, 0.12, runLength + 0.72),
+        new Vector3(stair.returnX, -0.06, midZ),
+        landingMat,
+        true,
+      );
+      this.box(
+        root,
+        `f${floor}-${side}-landing-lower`,
+        new Vector3(3.55, 0.12, 0.84),
+        new Vector3(0, -0.06, stair.lowerZ),
+        landingMat,
+        true,
+      );
+      this.box(
+        root,
+        `f${floor}-${side}-landing-upper`,
+        new Vector3(3.55, 0.12, 0.84),
+        new Vector3(0, -0.06, stair.upperZ),
+        landingMat,
+        true,
+      );
+
+      if (floor >= 6) continue;
+
+      const wallHeight = FLOOR_HEIGHT + 2.2;
+      const wallY = wallHeight / 2 - 0.05;
+      this.box(
+        root,
+        `f${floor}-${side}-outer-left`,
+        new Vector3(0.12, wallHeight, runLength + 1.4),
+        new Vector3(-1.82, wallY, midZ),
+        this.wall,
+        true,
+      );
+      this.box(
+        root,
+        `f${floor}-${side}-outer-right`,
+        new Vector3(0.12, wallHeight, runLength + 1.4),
+        new Vector3(1.82, wallY, midZ),
+        this.wall,
+        true,
+      );
+      this.box(
+        root,
+        `f${floor}-${side}-divider`,
+        new Vector3(0.10, wallHeight, Math.max(1.6, runLength - 1.35)),
+        new Vector3(0, wallY, midZ),
+        railMat,
+        true,
+      );
+
+      const rise = FLOOR_HEIGHT / STAIR_STEP_COUNT;
+      const treadDepth = runLength / STAIR_STEP_COUNT + 0.025;
+      for (let i = 0; i < STAIR_STEP_COUNT; i++) {
+        const progress = (i + 1) / STAIR_STEP_COUNT;
+        const stepHeight = progress * FLOOR_HEIGHT;
+        const z = stairProgressZ(side, (i + 0.5) / STAIR_STEP_COUNT);
         this.box(
           root,
           `f${floor}-${side}-step-${i}`,
-          new Vector3(2.1, 0.14 + i * 0.01, 0.42),
-          new Vector3(0, 0.07 + i * 0.16, baseZ + direction * i * 0.36),
-          stepMat,
-          true,
+          new Vector3(1.48, stepHeight, treadDepth),
+          new Vector3(stair.rampX, stepHeight / 2 - 0.01, z),
+          stairMat,
+          false,
         );
       }
-    }
-
-    const northUp = stairInteractionPoint("north", "up");
-    const northDown = stairInteractionPoint("north", "down");
-    const southUp = stairInteractionPoint("south", "up");
-    const southDown = stairInteractionPoint("south", "down");
-
-    if (floor < 6) {
-      this.interactions.push({ id: `stairs_north_up_${floor}`, kind: "stairs_up", floor, x: northUp.x, y: floorBaseY(floor) + 0.9, z: northUp.z, label: "上の階へ" });
-    }
-    if (floor > 1) {
-      this.interactions.push({ id: `stairs_north_down_${floor}`, kind: "stairs_down", floor, x: northDown.x, y: floorBaseY(floor) + 0.9, z: northDown.z, label: "下の階へ" });
-    }
-    if (floor < 6) {
-      this.interactions.push({ id: `stairs_south_up_${floor}`, kind: "stairs_up", floor, x: southUp.x, y: floorBaseY(floor) + 0.9, z: southUp.z, label: "上の階へ" });
-    }
-    if (floor > 1) {
-      this.interactions.push({ id: `stairs_south_down_${floor}`, kind: "stairs_down", floor, x: southDown.x, y: floorBaseY(floor) + 0.9, z: southDown.z, label: "下の階へ" });
     }
   }
 
