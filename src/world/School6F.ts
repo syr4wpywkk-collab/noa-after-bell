@@ -11,7 +11,7 @@ import {
 } from "@babylonjs/core";
 import { FLOOR_HEIGHT, FLOORS, floorBaseY, getFloorDefinition, type FloorId } from "../game/WorldLayout";
 import type { WorldInteraction } from "./types";
-import { stairInteractionPoint } from "./StairNavigation";
+import { STAIR_INTERACTION_RADIUS, stairInteractionPoint } from "./StairNavigation";
 
 export class School6F {
   private roots = new Map<FloorId, TransformNode>();
@@ -77,13 +77,15 @@ export class School6F {
 
   getNearbyInteraction(position: Vector3, floor: FloorId, maxDistance = 1.75): WorldInteraction | null {
     let best: WorldInteraction | null = null;
-    let bestDistance = maxDistance;
+    let bestDistance = Number.POSITIVE_INFINITY;
     for (const interaction of this.interactions) {
       if (interaction.floor !== floor) continue;
       const dx = interaction.x - position.x;
       const dz = interaction.z - position.z;
       const distance = Math.hypot(dx, dz);
-      if (distance < bestDistance) {
+      const isStair = interaction.kind === "stairs_up" || interaction.kind === "stairs_down";
+      const allowedDistance = isStair ? Math.max(maxDistance, STAIR_INTERACTION_RADIUS) : maxDistance;
+      if (distance < allowedDistance && distance < bestDistance) {
         best = interaction;
         bestDistance = distance;
       }
