@@ -59,18 +59,18 @@ export class PlayerController {
     this.flashlight.parent = this.camera;
     this.flashlight.diffuse = new Color3(0.88, 0.93, 0.90);
     this.flashlight.specular = new Color3(0.32, 0.36, 0.34);
-    this.flashlight.intensity = 4.7;
-    this.flashlight.range = 23;
+    this.flashlight.intensity = 8.5;
+    this.flashlight.range = 30;
 
     this.bindKeyboard();
     this.bindDesktopLook();
   }
 
-  spawn(position: Vector3, floor: FloorId = 1): void {
+  spawn(position: Vector3, floor: FloorId = 1, yaw = 0): void {
     this.floor = floor;
     this.collider.position.copyFrom(position);
     this.collider.position.y = floorBaseY(floor) + 0.9;
-    this.yaw = 0;
+    this.yaw = yaw;
     this.pitch = 0;
     this.syncRotation();
   }
