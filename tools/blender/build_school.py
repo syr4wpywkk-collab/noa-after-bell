@@ -173,16 +173,19 @@ def add_door_frame(
     corridor_y: float,
     trim: bpy.types.Material,
     door: bpy.types.Material,
+    *,
+    include_leaf: bool = True,
 ) -> None:
     x = -CORRIDOR_WIDTH / 2 + 0.05
-    add_box(
-        f"{floor_root.name}_door_{corridor_y:.1f}",
-        (x, corridor_y, floor_z + 1.12),
-        (0.10, 1.34, 2.24),
-        door,
-        bevel=0.012,
-        parent=floor_root,
-    )
+    if include_leaf:
+        add_box(
+            f"{floor_root.name}_door_{corridor_y:.1f}",
+            (x, corridor_y, floor_z + 1.12),
+            (0.10, 1.34, 2.24),
+            door,
+            bevel=0.012,
+            parent=floor_root,
+        )
     add_box(
         f"{floor_root.name}_door_frame_top_{corridor_y:.1f}",
         (x + 0.02, corridor_y, floor_z + 2.32),
@@ -313,14 +316,15 @@ def add_stair_visuals(
 
     # Compact external stair visuals. Runtime navigation remains engine-owned;
     # these meshes are strictly the visual authoring target for future GLB use.
-    for side_name, base_y, direction in (
-        ("north", -0.6, -1.0),
-        ("south", CORRIDOR_LENGTH + 0.6, 1.0),
+    for side_name, lower_y, upper_y, lane_x in (
+        ("north", -0.35, -5.15, -0.92),
+        ("south", 40.35, 45.15, 0.92),
     ):
         steps = 16
-        run = 5.2
-        width = 1.55
-        lane_x = -0.95 if side_name == "north" else 0.95
+        run = abs(upper_y - lower_y)
+        direction = 1.0 if upper_y > lower_y else -1.0
+        base_y = lower_y
+        width = 1.48
 
         for i in range(steps):
             progress = (i + 1) / steps
@@ -442,7 +446,7 @@ def build_school() -> dict[str, int]:
 
         # Architectural detail
         for y in (7.0, 13.5, 20.0, 26.5, 33.0):
-            add_door_frame(root, floor_z, y, trim, door)
+            add_door_frame(root, floor_z, y, trim, door, include_leaf=y != 20.0)
         for y in (5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0):
             add_window_group(root, floor_z, y, trim, glass)
         for y in (7.0, 20.0, 33.0):
@@ -473,13 +477,17 @@ def build_school() -> dict[str, int]:
         add_stair_visuals(root, floor_index, floor_z, stair_mat, rail_mat)
         merge_floor_meshes(root)
 
+    for mesh in list(bpy.data.meshes):
+        if mesh.users == 0:
+            bpy.data.meshes.remove(mesh)
+
     bpy.context.scene["noa_generator"] = "tools/blender/build_school.py"
     bpy.context.scene["noa_generator_version"] = GENERATOR_VERSION
     bpy.context.scene["noa_floor_count"] = FLOOR_COUNT
 
     return {
         "objects": len(bpy.data.objects),
-        "meshes": len(bpy.data.meshes),
+        "meshes": sum(1 for obj in bpy.data.objects if obj.type == "MESH"),
         "materials": len(bpy.data.materials),
     }
 
