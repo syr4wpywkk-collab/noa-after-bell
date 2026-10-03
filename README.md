@@ -2,11 +2,11 @@
 
 Mobile-first psychological horror game set in a six-floor Japanese integrated middle/high school.
 
-## v0.4 — SURVIVAL SYSTEMS
+## v0.4.1 — SEAMLESS STAIRS
 
 The vertical slice now connects trust to stealth, evidence, storage pressure, and deterministic escape routes.
 
-- Six-floor 3D school with floor-specific rooms and mobile floor culling
+- Six-floor 3D school with floor-specific rooms, mobile floor culling, and continuous walkable stairwells
 - NOA read-only GameState context
 - FAKER imitation router with rotating tells
 - Strict NOA response protocol + allow-listed EventValidator
@@ -34,7 +34,7 @@ Evidence photos near marked clues contribute to the true-ending state. The blue 
 
 ## Commands
 
-- `npm test` — bundles and runs deterministic v0.4 logic checks.
+- `npm test` — bundles and runs deterministic v0.4.1 logic checks.
 - `npm run typecheck` — strict TypeScript check.
 - `npm run build` — typecheck plus the production Vite/PWA build.
 

@@ -7,7 +7,7 @@ import { canSprintWithMat, placeCarriedMat } from "../mat/MatState";
 import { EndingController } from "../endings/EndingController";
 import { localNoaResponse } from "../noa/LocalNoaRuntime";
 import type { NoaResponse } from "../noa/protocol";
-import { STAIR_INTERACTION_RADIUS, stairArrivalPoint, stairInteractionPoint } from "../world/StairNavigation";
+import { PLAYER_CENTER_HEIGHT, STAIRWELLS, floorFromPlayerHeight, isInStairwell, sampleStairRamp, stairProgressZ } from "../world/StairNavigation";
 
 function assert(value: unknown, message: string): asserts value { if (!value) throw new Error(message); }
 function response(event: NoaResponse["event"], source: NoaResponse["source"] = "noa"): NoaResponse { return { message: "ok", source, mood: "calm", event, delayMs: 0, confidence: 1 }; }
@@ -36,11 +36,30 @@ async function run(): Promise<void> {
   let full = false; try { await photos.save({ blob, floor: 1, location: "test", virtualSizeMb: NORMAL_PHOTO_SIZE_MB }); } catch { full = true; }
   assert(full && photos.usedMb() === 150, "150MB quota rejects overflow"); await photos.remove(first.id); assert(photos.usedMb() === 135, "deletion reclaims quota");
 
-  const northUp = stairInteractionPoint("north", "up");
-  const northDown = stairInteractionPoint("north", "down");
-  assert(Math.hypot(northUp.x, northUp.z - 6) < STAIR_INTERACTION_RADIUS, "north stair prompt is reachable from corridor center");
-  assert(northUp.x !== northDown.x, "stair directions remain spatially distinct");
-  assert(stairArrivalPoint(northUp).x === northUp.x, "stair arrival preserves traversal lane");
+  let stairY = PLAYER_CENTER_HEIGHT;
+  for (let floor = 1; floor < 6; floor++) {
+    for (let step = 0; step <= 20; step++) {
+      const progress = step / 20;
+      const z = stairProgressZ("north", progress);
+      const sample = sampleStairRamp(STAIRWELLS.north.rampX, z, stairY);
+      assert(sample, `north stair sample exists on ascent ${floor}F step ${step}`);
+      stairY = sample.playerY;
+    }
+    assert(floorFromPlayerHeight(stairY) === floor + 1, `continuous stair ascent reaches ${floor + 1}F`);
+  }
+  assert(isInStairwell(STAIRWELLS.north.rampX, stairProgressZ("north", 0.5)), "north ramp is recognized as stairwell");
+
+  for (let floor = 6; floor > 1; floor--) {
+    for (let step = 20; step >= 0; step--) {
+      const progress = step / 20;
+      const z = stairProgressZ("north", progress);
+      const sample = sampleStairRamp(STAIRWELLS.north.rampX, z, stairY);
+      assert(sample, `north stair sample exists on descent ${floor}F step ${step}`);
+      stairY = sample.playerY;
+    }
+    assert(floorFromPlayerHeight(stairY) === floor - 1, `continuous stair descent reaches ${floor - 1}F`);
+  }
+  assert(Math.abs(stairY - PLAYER_CENTER_HEIGHT) < 0.001, "round trip returns to 1F height");
 
   const mat = { discovered: true, matsAvailable: 0, matsPlaced: 2, carrying: true, courtyardPrepared: false };
   assert(!canSprintWithMat(mat), "mat disables sprint"); const placed = placeCarriedMat(mat); assert(placed.matsPlaced === 3 && placed.courtyardPrepared, "third mat prepares courtyard");
@@ -59,7 +78,7 @@ async function run(): Promise<void> {
   assert(endings.canTrigger("ENDING_06_AFTER_BELL", trueReady), "after-bell ending requires full evidence");
   assert(localNoaResponse("帰りたい", state.snapshot(), "noa").message.length > 0, "deterministic NOA fallback responds");
   assert(!JSON.stringify(state.snapshot()).includes("OPENAI_API_KEY"), "client state contains no secret name");
-  console.log("v0.4 logic tests passed");
+  console.log("v0.4.1 logic tests passed");
 }
 
 void run();
