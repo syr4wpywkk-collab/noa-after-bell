@@ -70,6 +70,10 @@ async function run(): Promise<void> {
   assert(FIRST_FLOOR_ROOMS.some((room) => room.kind === "infirmary"), "1F has infirmary");
   assert(FIRST_FLOOR_ROOMS.some((room) => room.kind === "career"), "1F has career guidance room");
   assert(firstFloorRoomAt(FIRST_FLOOR_START.x, FIRST_FLOOR_START.z)?.id === "class_1_6", "player starts inside 1-6");
+  const startRoom = FIRST_FLOOR_ROOMS.find((room) => room.id === "class_1_6");
+  assert(Boolean(startRoom), "1-6 room definition exists");
+  assert(Math.abs(FIRST_FLOOR_START.z - (startRoom?.doorZ ?? 0)) < 0.05, "player starts aligned with the 1-6 doorway");
+  assert(FIRST_FLOOR_START.x > -4.8 && FIRST_FLOOR_START.x < -3.8, "player starts in the clear doorway aisle");
   assert(firstFloorZoneAt(0, 70) === "administration_corridor", "admin corridor is mapped");
 
   const mat = { discovered: true, matsAvailable: 0, matsPlaced: 2, carrying: true, courtyardPrepared: false };
@@ -89,7 +93,7 @@ async function run(): Promise<void> {
   assert(endings.canTrigger("ENDING_06_AFTER_BELL", trueReady), "after-bell ending requires full evidence");
   assert(localNoaResponse("帰りたい", state.snapshot(), "noa").message.length > 0, "deterministic NOA fallback responds");
   assert(!JSON.stringify(state.snapshot()).includes("OPENAI_API_KEY"), "client state contains no secret name");
-  console.log("v0.6 logic tests passed");
+  console.log("v0.6.1 logic tests passed");
 }
 
 void run();
