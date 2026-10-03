@@ -1,14 +1,15 @@
 {
-  "generator_version": "0.2.0",
+  "generator_version": "0.6.0",
   "blender_version": "4.0.2",
   "floor_count": 6,
-  "corridor_length_m": 40.0,
-  "corridor_width_m": 6.2,
-  "object_count": 64,
-  "mesh_count": 58,
-  "material_count": 11,
-  "glb_bytes": 1968120,
-  "blend_bytes": 2728796,
+  "first_floor_length_m": 92.0,
+  "first_floor_rooms": 17,
+  "light_markers": 42,
+  "object_count": 109,
+  "mesh_count": 61,
+  "material_count": 34,
+  "glb_bytes": 5563940,
+  "blend_bytes": 5814572,
   "glb": "school_shell.glb",
   "blend": "school_shell.blend"
 }
