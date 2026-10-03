@@ -51,7 +51,8 @@ jobs:
             --python tools/blender/validate_glb.py -- \
             build/blender/school_shell.glb \
             --min-meshes 30 \
-            --min-materials 6
+            --min-materials 6 \
+            --max-mb 6
 
       - name: Write checksums
         run: |
