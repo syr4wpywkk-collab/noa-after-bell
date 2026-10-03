@@ -53,6 +53,22 @@ export class School6F {
     return this.activeFloor;
   }
 
+  setLegacyVisualsMuted(muted: boolean): void {
+    for (const root of this.roots.values()) {
+      for (const mesh of root.getChildMeshes(false)) {
+        if (!this.isReplacedByBlender(mesh.name)) continue;
+        mesh.visibility = muted ? 0 : 1;
+      }
+    }
+  }
+
+  private isReplacedByBlender(name: string): boolean {
+    if (/^f[1-6]-(corridor-floor|corridor-ceiling|right-wall|left-wall-|door|window|floor-seam|skirt|light-panel|north-|south-)/i.test(name)) {
+      return true;
+    }
+    return /^locker-floor-[12]-/i.test(name);
+  }
+
   private applyFloorVisibility(floor: FloorId, includeAdjacent: boolean): void {
     const key = `${floor}:${includeAdjacent ? 1 : 0}`;
     if (this.visibilityKey === key) return;
