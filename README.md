@@ -76,3 +76,17 @@ Never expose server secrets through Vite `VITE_*` variables.
 ### Verification
 
 `npm test && npm run typecheck && npm run build`.
+
+
+## v0.7 High-resolution PBR material pass
+
+- Six reference-inspired procedural school surfaces: aged ivory plaster, green vinyl/tile floor, scuffed desk wood, dusty chalkboard, ceiling plaster, dark metal.
+- Each material includes albedo (color), tangent-space normal, and packed occlusion/roughness/metallic maps in local WebP files.
+- 2048×2048 desktop textures on capable hardware; 1024×1024 for touch devices. Ceiling and metal deliberately use 1K even on desktop to save VRAM.
+- Existing Blender 3D GLB retains its geometry/collision/room layout. Blender generator now creates meter-projected, repeating UVs **before** per-material merge, avoiding a single texture being stretched across a 92-meter corridor.
+- Runtime material hook: `src/world/HighResTextures.ts`; deterministic texture synthesis: `tools/textures/generate_textures.py`.
+- Rebuilding or editing procedural texture assets requires no third-party image service, license, network fetch, or secret key. The high-resolution maps are art-directed from the classroom/corridor concepts and do not imply the 2D pictures were reconstructed into full 3D.
+- Blender Asset Pipeline now generates and validates all 36 maps, regenerates the GLB and publishes runtime files to the PR branch.
+- Runtime material fallback retains old flat colors if a texture cannot load. Use in-game screenshots and real-device profiling to verify GPU memory and image quality after merge.
+
+To regenerate locally: `python3 tools/textures/generate_textures.py --output-dir public/assets/textures`.

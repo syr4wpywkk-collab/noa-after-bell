@@ -1,4 +1,4 @@
-const CACHE = "noa-after-bell-v061-shell";
+const CACHE = "noa-after-bell-v07-hd-pbr";
 const SHELL = ["/", "/manifest.webmanifest"];
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)).catch(() => undefined));

@@ -1,5 +1,5 @@
 {
-  "generator_version": "0.6.0",
+  "generator_version": "0.7.0-hd-uv",
   "blender_version": "4.0.2",
   "floor_count": 6,
   "first_floor_length_m": 92.0,
@@ -9,7 +9,7 @@
   "mesh_count": 61,
   "material_count": 34,
   "glb_bytes": 4166140,
-  "blend_bytes": 4804332,
+  "blend_bytes": 4804336,
   "glb": "school_shell.glb",
   "blend": "school_shell.blend"
 }

@@ -1,0 +1,188 @@
+{
+  "format": "PBR-ORM",
+  "source": "procedural; night-school reference palette",
+  "tier_2k": 2048,
+  "tier_1k": 1024,
+  "textures": [
+    {
+      "name": "plaster-2k-albedo.webp",
+      "resolution": 2048,
+      "bytes": 378990
+    },
+    {
+      "name": "plaster-2k-normal.webp",
+      "resolution": 2048,
+      "bytes": 2897056
+    },
+    {
+      "name": "plaster-2k-orm.webp",
+      "resolution": 2048,
+      "bytes": 682386
+    },
+    {
+      "name": "plaster-1k-albedo.webp",
+      "resolution": 1024,
+      "bytes": 25596
+    },
+    {
+      "name": "plaster-1k-normal.webp",
+      "resolution": 1024,
+      "bytes": 568220
+    },
+    {
+      "name": "plaster-1k-orm.webp",
+      "resolution": 1024,
+      "bytes": 29654
+    },
+    {
+      "name": "vinyl-2k-albedo.webp",
+      "resolution": 2048,
+      "bytes": 240732
+    },
+    {
+      "name": "vinyl-2k-normal.webp",
+      "resolution": 2048,
+      "bytes": 2140718
+    },
+    {
+      "name": "vinyl-2k-orm.webp",
+      "resolution": 2048,
+      "bytes": 764504
+    },
+    {
+      "name": "vinyl-1k-albedo.webp",
+      "resolution": 1024,
+      "bytes": 24488
+    },
+    {
+      "name": "vinyl-1k-normal.webp",
+      "resolution": 1024,
+      "bytes": 341720
+    },
+    {
+      "name": "vinyl-1k-orm.webp",
+      "resolution": 1024,
+      "bytes": 32550
+    },
+    {
+      "name": "wood-2k-albedo.webp",
+      "resolution": 2048,
+      "bytes": 163732
+    },
+    {
+      "name": "wood-2k-normal.webp",
+      "resolution": 2048,
+      "bytes": 2406294
+    },
+    {
+      "name": "wood-2k-orm.webp",
+      "resolution": 2048,
+      "bytes": 647832
+    },
+    {
+      "name": "wood-1k-albedo.webp",
+      "resolution": 1024,
+      "bytes": 55038
+    },
+    {
+      "name": "wood-1k-normal.webp",
+      "resolution": 1024,
+      "bytes": 442436
+    },
+    {
+      "name": "wood-1k-orm.webp",
+      "resolution": 1024,
+      "bytes": 27962
+    },
+    {
+      "name": "chalk-2k-albedo.webp",
+      "resolution": 2048,
+      "bytes": 511858
+    },
+    {
+      "name": "chalk-2k-normal.webp",
+      "resolution": 2048,
+      "bytes": 2462396
+    },
+    {
+      "name": "chalk-2k-orm.webp",
+      "resolution": 2048,
+      "bytes": 430922
+    },
+    {
+      "name": "chalk-1k-albedo.webp",
+      "resolution": 1024,
+      "bytes": 26926
+    },
+    {
+      "name": "chalk-1k-normal.webp",
+      "resolution": 1024,
+      "bytes": 404530
+    },
+    {
+      "name": "chalk-1k-orm.webp",
+      "resolution": 1024,
+      "bytes": 21268
+    },
+    {
+      "name": "ceiling-2k-albedo.webp",
+      "resolution": 2048,
+      "bytes": 732108
+    },
+    {
+      "name": "ceiling-2k-normal.webp",
+      "resolution": 2048,
+      "bytes": 2912604
+    },
+    {
+      "name": "ceiling-2k-orm.webp",
+      "resolution": 2048,
+      "bytes": 644578
+    },
+    {
+      "name": "ceiling-1k-albedo.webp",
+      "resolution": 1024,
+      "bytes": 66610
+    },
+    {
+      "name": "ceiling-1k-normal.webp",
+      "resolution": 1024,
+      "bytes": 567650
+    },
+    {
+      "name": "ceiling-1k-orm.webp",
+      "resolution": 1024,
+      "bytes": 28016
+    },
+    {
+      "name": "metal-2k-albedo.webp",
+      "resolution": 2048,
+      "bytes": 306840
+    },
+    {
+      "name": "metal-2k-normal.webp",
+      "resolution": 2048,
+      "bytes": 2208834
+    },
+    {
+      "name": "metal-2k-orm.webp",
+      "resolution": 2048,
+      "bytes": 656488
+    },
+    {
+      "name": "metal-1k-albedo.webp",
+      "resolution": 1024,
+      "bytes": 25870
+    },
+    {
+      "name": "metal-1k-normal.webp",
+      "resolution": 1024,
+      "bytes": 320880
+    },
+    {
+      "name": "metal-1k-orm.webp",
+      "resolution": 1024,
+      "bytes": 28666
+    }
+  ]
+}
