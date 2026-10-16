@@ -100,3 +100,17 @@ h2 { font-size:clamp(40px,10vw,70px); }
 @media (pointer:fine) { #joystick-zone,#look-zone{display:none} #interact-button{bottom:134px} #flashlight-button{bottom:78px} #phone-button{bottom:22px} }
 @media (orientation:portrait) and (pointer:coarse) { #rotate-hint{display:block} #joystick-base{width:104px;height:104px} #joystick-knob{left:30px;top:30px;width:44px;height:44px} #phone{height:70vh} #objective{max-width:65vw} }
 @media (orientation:landscape) and (max-height:500px) { #phone{height:94vh;width:min(430px,52vw);right:max(8px,env(safe-area-inset-right));border-radius:22px} #phone-feed{top:72px} #phone-header{top:31px}.phone-island{top:5px;height:17px} #phone-signal{top:51px} #joystick-base{width:96px;height:96px;bottom:max(10px,env(safe-area-inset-bottom))} #joystick-knob{left:28px;top:28px;width:40px;height:40px} #interact-button{bottom:118px} #flashlight-button{bottom:62px}.hud-button{height:42px} }
+
+/* Cinematic PC experience: keyboard hints appear only on mouse-capable devices. */
+#pc-hint{display:none}
+.desktop-start-help{display:none!important}
+@media (pointer:fine){
+  #pc-hint{display:block;position:absolute;left:50%;bottom:20px;transform:translateX(-50%);width:max-content;max-width:calc(100vw - 32px);text-align:center;font-size:11px;line-height:1.85;letter-spacing:.045em;color:rgba(224,240,240,.80);padding:8px 16px;border:1px solid rgba(179,216,218,.15);border-radius:12px;background:rgba(2,8,11,.64);backdrop-filter:blur(8px);opacity:0;transition:opacity .3s}
+  #pc-hint.playing{opacity:1}
+  #pc-hint span{color:rgba(194,213,213,.55)}
+  #pc-hint.locked span{display:none}
+  .desktop-start-help{display:block!important}
+  .mobile-start-help{display:none!important}
+  #topbar{font-size:12px;top:18px;left:24px;right:24px}
+  #interaction-prompt{font-size:13px;bottom:16%}
+}

@@ -88,7 +88,10 @@ export class PlayerController {
 
   setActive(active: boolean): void {
     this.active = active;
-    if (!active) this.setMoveVector(0, 0);
+    if (!active) {
+      this.setMoveVector(0, 0);
+      this.keys.clear();
+    }
   }
 
   setMoveVector(x: number, y: number): void {
@@ -192,8 +195,13 @@ export class PlayerController {
 
   private bindKeyboard(): void {
     window.addEventListener("keydown", (event) => {
+      const target = event.target;
+      const typing = target instanceof HTMLElement &&
+        (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
+      if (!this.active || typing) return;
+      if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"].includes(event.code)) event.preventDefault();
       this.keys.add(event.code);
-      if (event.code === "KeyF") this.toggleFlashlight();
+      if (event.code === "KeyF" && !event.repeat) this.toggleFlashlight();
     });
     window.addEventListener("keyup", (event) => this.keys.delete(event.code));
     window.addEventListener("blur", () => this.keys.clear());
@@ -203,7 +211,12 @@ export class PlayerController {
     if (!window.matchMedia("(pointer: fine)").matches) return;
     this.canvas.addEventListener("pointerdown", () => {
       if (!this.active) return;
-      this.canvas.requestPointerLock?.();
+      try {
+        const result = this.canvas.requestPointerLock?.();
+        if (result && typeof result.catch === "function") void result.catch(() => {});
+      } catch {
+        // Pointer lock is optional on browsers that restrict it.
+      }
     });
     document.addEventListener("mousemove", (event) => {
       if (document.pointerLockElement !== this.canvas) return;
