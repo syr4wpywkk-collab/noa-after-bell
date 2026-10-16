@@ -22,6 +22,7 @@
       </div>
       <div id="tension-track"><div id="tension-meter"></div></div>
       <div id="crosshair"></div>
+      <div id="pc-hint">WASD 移動 · マウス 視点 · Shift 走る · E 調べる · F ライト · Tab NOA · C 写真 · Q アルバム · M 音量<br><span>ゲーム画面をクリックで視点を固定 / Esc で解除</span></div>
       <div id="toast" role="status" aria-live="polite"></div>
       <div id="interaction-prompt"></div>
 
@@ -71,12 +72,13 @@
 
     <section id="start-screen" class="screen-panel">
       <div class="start-card">
-        <div class="eyebrow">MOBILE-FIRST PSYCHOLOGICAL HORROR / v0.4</div>
+        <div class="eyebrow">CINEMATIC 3D / DESKTOP + MOBILE</div>
         <h1>NOA:<br /><span>AFTER BELL</span></h1>
         <p>6階建ての中高一貫校。<br />頼れるのは、画面の向こうのNOAだけ。</p>
         <button id="enter-button" class="primary-button" type="button">校舎に入る</button>
         <div id="boot-status">LOADING</div>
-        <small>左：移動　右：視点　◎：調べる　🔦：懐中電灯</small>
+        <small class="mobile-start-help">スマホ：左スティックで移動 / 右側で視点操作</small>
+        <small class="desktop-start-help">PC：WASD 移動 · マウス視点 · E 調べる · F ライト · Tab NOA · M ミュート</small>
       </div>
     </section>
 

@@ -25,6 +25,7 @@ import { PlayerController } from "../player/PlayerController";
 import { PuzzleManager } from "../puzzles/PuzzleManager";
 import { School6F } from "../world/School6F";
 import { SchoolVisuals, type SchoolVisualMode } from "../world/SchoolVisuals";
+import { CinematicDressing } from "../world/CinematicDressing";
 import { FIRST_FLOOR_START } from "../world/FirstFloorLayout";
 import type { WorldInteraction } from "../world/types";
 import { ThreatController } from "../threat/ThreatController";
@@ -46,6 +47,7 @@ export class Game {
   private scene!: Scene;
   private school!: School6F;
   private visuals!: SchoolVisuals;
+  private dressing!: CinematicDressing;
   private visualMode: SchoolVisualMode = "fallback";
   private player!: PlayerController;
   private mobile!: MobileControls;
@@ -106,6 +108,8 @@ export class Game {
       console.warn("Blender visual layer unavailable:", visualLoad.reason);
     }
 
+    this.dressing = new CinematicDressing(this.scene);
+    this.dressing.setFloor(1);
     this.player = new PlayerController(this.scene, this.canvas);
     this.player.spawn(new Vector3(FIRST_FLOOR_START.x, FIRST_FLOOR_START.y, FIRST_FLOOR_START.z), 1, FIRST_FLOOR_START.yaw);
 
@@ -113,6 +117,14 @@ export class Game {
     this.noaClient = new NoaClient((signal) => this.phone.setSignal(signal));
     this.puzzles = new PuzzleManager(this.state, this.phone);
     this.mobile = new MobileControls(this.player, this.phone, () => this.interact());
+    this.phone.setToggleHandler((open) => {
+      if (!this.started) return;
+      const terminalOpen = document.querySelector("#terminal-panel")?.classList.contains("open");
+      this.player.setActive(!open && !terminalOpen);
+      this.mobile.setActive(!open && !terminalOpen);
+      if (open && document.pointerLockElement === this.canvas) document.exitPointerLock?.();
+      if (!open) this.canvas.focus();
+    });
     this.phone.setSubmitHandler((text) => this.handleNoaInput(text));
     await this.photos.open().catch(() => this.phone.notify("アルバムを一時メモリで起動"));
     this.album = new AlbumUI(this.photos, () => this.state.getChapter());
@@ -174,6 +186,7 @@ export class Game {
     const position = this.player.getPosition();
     this.school.setPlayerContext(floor, position);
     this.visuals.setPlayerContext(floor, position);
+    this.dressing.setFloor(floor);
     const zone = describeZone(floor, position.x, position.z);
     const location = zoneDisplayName(floor, zone);
     const nearby = this.school.getNearbyLabels(position, floor);
@@ -198,9 +211,11 @@ export class Game {
     });
     const safeZone = floor === 5 && zone.includes("special_room");
     this.state.setSafeZone(safeZone);
+    this.audio.setEnvironment(floor === 1 && position.x < -3.2 && position.z >= 53 && position.z <= 61, horror.tension);
     this.footstepCooldown -= dt;
     if (this.player.isMoving() && this.footstepCooldown <= 0) {
       this.threat.hear({ floor, x: position.x, z: position.z, strength: this.player.isSprinting() ? 16 : 7, kind: this.player.isSprinting() ? "sprint" : "footstep" });
+      this.audio.footstep(this.player.isSprinting());
       this.footstepCooldown = this.player.isSprinting() ? 0.34 : 0.72;
     }
     const threat = this.threat.update(dt, {
@@ -432,11 +447,34 @@ export class Game {
 
   private bindDesktopActions(): void {
     window.addEventListener("keydown", (event) => {
-      if (event.code === "KeyE") this.interact();
+      if (!this.started) return;
+      if (event.code === "Escape" && this.phone.isOpen()) {
+        event.preventDefault();
+        this.phone.toggle(false);
+        return;
+      }
+      const target = event.target;
+      const typing = target instanceof HTMLElement &&
+        (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
+      if (typing || event.repeat) return;
       if (event.code === "Tab") {
         event.preventDefault();
         this.phone.toggle();
       }
+      if (this.phone.isOpen()) return;
+      if (event.code === "KeyE") this.interact();
+      if (event.code === "KeyC") void this.capturePhoto();
+      if (event.code === "KeyQ") {
+        document.exitPointerLock?.();
+        this.album.toggle(true);
+      }
+      if (event.code === "KeyM") {
+        const muted = this.audio.toggleMute();
+        this.phone.notify(muted ? "音声 OFF · M で再開" : "音声 ON", 1400);
+      }
+    });
+    document.addEventListener("pointerlockchange", () => {
+      document.querySelector("#pc-hint")?.classList.toggle("locked", document.pointerLockElement === this.canvas);
     });
   }
 
@@ -450,6 +488,8 @@ export class Game {
       start?.classList.add("hidden");
       await this.audio.start();
       this.started = true;
+      this.audio.announce("こちらは校内放送です。最終下校時刻を過ぎています。生徒は速やかに下校してください。");
+      document.querySelector("#pc-hint")?.classList.add("playing");
       this.state.setObjective("1年6組を出て、1F職員室まで校内を確認する");
       this.phone.push("NOA", "接続できてる。\n\n今いるのは1年6組。まず廊下に出て、職員室まで様子を見よう。保健室と進路指導室も1Fにある。", { mood: "calm" });
       window.setTimeout(() => {

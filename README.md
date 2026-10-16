@@ -63,3 +63,16 @@ The visual-asset pipeline runs Blender headlessly in GitHub Actions. It currentl
 - `SUPABASE_SECRET_KEY` — optional server-only Supabase secret key. Legacy `SUPABASE_SERVICE_ROLE_KEY` is accepted as a fallback.
 
 Never expose server secrets through Vite `VITE_*` variables.
+
+## Cinematic 3D / Desktop audio pass (October 2026)
+
+- The two night-school concept frames are *visual references*, not depth maps. A single 2D image cannot reconstruct occluded 3D geometry. `CinematicDressing` builds actual meshes and readable texture signage around the existing first-floor 1-6 spawn room and adjacent corridor. Existing 6F geometry and story state stay authoritative.
+- Procedural Web Audio: fluorescent hum, wind/air noise, footsteps, chimes, radio static and event sounds. The browser's Japanese speech synthesis supplies the optional opening school announcement; available voices differ by browser/OS, and captions/gameplay remain usable without speech synthesis.
+- Desktop: click game canvas to lock mouse; WASD/arrow keys move, Shift runs, E interacts, F toggles flashlight, Tab opens NOA, C takes a photo, Q opens album, M mutes; Esc releases the mouse and closes the phone. Focus in a text box disables movement/game hotkeys.
+- Mobile touch controls remain available, with desktop key hints hidden on touch-first browsers.
+- New geometry and audio are code-generated and do not depend on third-party sound/CDN/LLM keys.
+- Note: the current story spawn remains **1年6組**, consistent with the existing Blender/collision layout; a true **2年4組** re-map and high-resolution photo-sourced PBR texture authoring are separate modeling tasks.
+
+### Verification
+
+`npm test && npm run typecheck && npm run build`.

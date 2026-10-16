@@ -23,6 +23,7 @@ export class NoaPhone {
   private toastTimer?: number;
   private submitHandler?: (text: string) => void | Promise<void>;
   private mode: "danger" | "normal" | "safe" = "normal";
+  private toggleHandler?: (open: boolean) => void;
 
   constructor() {
     this.button?.addEventListener("pointerdown", (event) => {
@@ -72,10 +73,15 @@ export class NoaPhone {
     this.root?.classList.toggle("open", this.open);
     this.root?.setAttribute("aria-hidden", this.open ? "false" : "true");
     if (this.open) window.setTimeout(() => this.input?.focus(), 180);
+    this.toggleHandler?.(this.open);
   }
 
   isOpen(): boolean {
     return this.open;
+  }
+
+  setToggleHandler(handler: (open: boolean) => void): void {
+    this.toggleHandler = handler;
   }
 
   push(author: string, message: string, options: MessageOptions = {}): void {
