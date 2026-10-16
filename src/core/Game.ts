@@ -102,6 +102,8 @@ export class Game {
     this.visualMode = visualLoad.mode;
     if (visualLoad.mode === "blender") {
       this.school.setLegacyVisualsMuted(true);
+      // Keep the authored GLB visible, but rely on its own room lights plus
+      // a safe ambient fill on touch devices. Legacy lights remain muted.
       this.school.setFloorLightingEnabled(1, false);
       if (bootStatus) bootStatus.textContent = `BLENDER READY · ${visualLoad.meshCount} MESHES / ${visualLoad.materialCount} MATERIALS`;
     } else if (bootStatus) {
@@ -531,9 +533,10 @@ export class Game {
     scene.fogColor = new Color3(0.022, 0.03, 0.035);
 
     const hemi = new HemisphericLight("night-fill", new Vector3(0, 1, 0), scene);
-    hemi.intensity = 0.16;
-    hemi.diffuse = new Color3(0.34, 0.43, 0.48);
-    hemi.groundColor = new Color3(0.025, 0.03, 0.035);
+    const touchDevice = window.matchMedia("(pointer: coarse)").matches;
+    hemi.intensity = touchDevice ? 0.64 : 0.30;
+    hemi.diffuse = new Color3(0.60, 0.70, 0.76);
+    hemi.groundColor = new Color3(0.22, 0.26, 0.29);
 
     const glow = new GlowLayer("emissive-glow", scene, { blurKernelSize: 24 });
     glow.intensity = 0.24;
@@ -545,8 +548,8 @@ export class Game {
     pipeline.bloomWeight = 0.13;
     pipeline.bloomKernel = 32;
     pipeline.imageProcessingEnabled = true;
-    pipeline.imageProcessing.contrast = 1.12;
-    pipeline.imageProcessing.exposure = 1.04;
+    pipeline.imageProcessing.contrast = touchDevice ? 1.02 : 1.10;
+    pipeline.imageProcessing.exposure = touchDevice ? 1.48 : 1.18;
     pipeline.imageProcessing.vignetteEnabled = true;
     pipeline.imageProcessing.vignetteWeight = 1.25;
     pipeline.imageProcessing.vignetteStretch = 0.15;
