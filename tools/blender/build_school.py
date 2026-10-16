@@ -20,7 +20,7 @@ from pathlib import Path
 import bpy
 
 
-GENERATOR_VERSION = "0.6.0"
+GENERATOR_VERSION = "0.7.0-hd-uv"
 FLOOR_HEIGHT = 4.15
 FLOOR_COUNT = 6
 FIRST_FLOOR_LENGTH = 92.0
@@ -92,6 +92,37 @@ def material(name: str, rgba: tuple[float, float, float, float], roughness: floa
     return mat
 
 
+
+def assign_world_tiled_uv(obj: bpy.types.Object, mat: bpy.types.Material) -> None:
+    """Texture every cube face at stable real-world scale, even after mesh merges.
+
+    Legacy GLB meshes used default cube UVs, stretching one pattern across
+    multi-meter corridor floors. Project UVs in meters before material merging
+    so a shared high-resolution tile texture stays crisp on all faces.
+    """
+    mesh = obj.data
+    uv = mesh.uv_layers.active or mesh.uv_layers.new(name="UVMap")
+    material_name = mat.name.lower()
+    meters = (
+        0.8 if "desk" in material_name or "wood" in material_name
+        else 2.6 if "wall" in material_name or "ceiling" in material_name
+        else 1.8 if "floor" in material_name
+        else 3.0 if "blackboard" in material_name
+        else 1.2
+    )
+    for polygon in mesh.polygons:
+        nx, ny, nz = (abs(v) for v in polygon.normal)
+        for loop_index in polygon.loop_indices:
+            vertex = mesh.vertices[mesh.loops[loop_index].vertex_index].co
+            x, y, z = (vertex[i] + obj.location[i] for i in range(3))
+            if nx >= ny and nx >= nz:
+                uv.data[loop_index].uv = (y / meters, z / meters)
+            elif ny >= nz:
+                uv.data[loop_index].uv = (x / meters, z / meters)
+            else:
+                uv.data[loop_index].uv = (x / meters, y / meters)
+
+
 def add_box(name: str, loc: tuple[float, float, float], dims: tuple[float, float, float], mat: bpy.types.Material, parent: bpy.types.Object, bevel: float = 0.01) -> bpy.types.Object:
     bpy.ops.mesh.primitive_cube_add(size=1.0, location=game_to_blender_location(loc))
     obj = bpy.context.active_object
@@ -106,6 +137,7 @@ def add_box(name: str, loc: tuple[float, float, float], dims: tuple[float, float
         mod.limit_method = "ANGLE"
         bpy.context.view_layer.objects.active = obj
         bpy.ops.object.modifier_apply(modifier=mod.name)
+    assign_world_tiled_uv(obj, mat)
     obj.parent = parent
     return obj
 

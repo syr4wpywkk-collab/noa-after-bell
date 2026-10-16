@@ -26,6 +26,7 @@ import { PuzzleManager } from "../puzzles/PuzzleManager";
 import { School6F } from "../world/School6F";
 import { SchoolVisuals, type SchoolVisualMode } from "../world/SchoolVisuals";
 import { CinematicDressing } from "../world/CinematicDressing";
+import { HighResTextures } from "../world/HighResTextures";
 import { FIRST_FLOOR_START } from "../world/FirstFloorLayout";
 import type { WorldInteraction } from "../world/types";
 import { ThreatController } from "../threat/ThreatController";
@@ -110,6 +111,10 @@ export class Game {
 
     this.dressing = new CinematicDressing(this.scene);
     this.dressing.setFloor(1);
+    const quality = this.engine.getCaps().maxTextureSize >= 2048;
+    const textures = new HighResTextures(this.scene, quality);
+    const materialCount = textures.apply();
+    console.info("AFTER BELL textures:", textures.quality, "surfaces:", materialCount);
     this.player = new PlayerController(this.scene, this.canvas);
     this.player.spawn(new Vector3(FIRST_FLOOR_START.x, FIRST_FLOOR_START.y, FIRST_FLOOR_START.z), 1, FIRST_FLOOR_START.yaw);
 
@@ -482,7 +487,7 @@ export class Game {
     const start = document.querySelector<HTMLElement>("#start-screen");
     const button = document.querySelector<HTMLButtonElement>("#enter-button");
     const status = document.querySelector<HTMLElement>("#boot-status");
-    if (status) status.textContent = this.visualMode === "blender" ? "v0.6 · 1F SCHOOL REBUILD / BLENDER" : "v0.6 · 1F SCHOOL REBUILD / FALLBACK";
+    if (status) status.textContent = this.visualMode === "blender" ? "v0.7 · CINEMATIC PBR / BLENDER" : "v0.7 · CINEMATIC PBR / FALLBACK";
 
     button?.addEventListener("click", async () => {
       start?.classList.add("hidden");
