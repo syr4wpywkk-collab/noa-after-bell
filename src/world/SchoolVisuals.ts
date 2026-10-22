@@ -74,7 +74,9 @@ export class SchoolVisuals {
           light.diffuse = isEmergency ? new Color3(0.42, 0.72, 0.48) : new Color3(0.82, 0.90, 0.88);
           light.specular = new Color3(0.22, 0.25, 0.24);
           light.intensity = baseIntensity;
-          light.range = isCorridor ? 13.5 : 12.0;
+          light.range = window.matchMedia("(pointer: coarse)").matches
+            ? (isCorridor ? 13.5 : 12.0)
+            : (isCorridor ? 12.5 : 10.5);
           light.setEnabled(false);
           this.markerLights.push({ floor, position, light, baseIntensity });
         }
