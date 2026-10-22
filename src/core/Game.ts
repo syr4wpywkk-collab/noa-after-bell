@@ -534,9 +534,9 @@ export class Game {
 
     const hemi = new HemisphericLight("night-fill", new Vector3(0, 1, 0), scene);
     const touchDevice = window.matchMedia("(pointer: coarse)").matches;
-    hemi.intensity = touchDevice ? 0.64 : 0.30;
-    hemi.diffuse = new Color3(0.60, 0.70, 0.76);
-    hemi.groundColor = new Color3(0.22, 0.26, 0.29);
+    hemi.intensity = touchDevice ? 0.64 : 0.16;
+    hemi.diffuse = touchDevice ? new Color3(0.60, 0.70, 0.76) : new Color3(0.34, 0.43, 0.48);
+    hemi.groundColor = touchDevice ? new Color3(0.22, 0.26, 0.29) : new Color3(0.025, 0.03, 0.035);
 
     const glow = new GlowLayer("emissive-glow", scene, { blurKernelSize: 24 });
     glow.intensity = 0.24;
@@ -548,8 +548,8 @@ export class Game {
     pipeline.bloomWeight = 0.13;
     pipeline.bloomKernel = 32;
     pipeline.imageProcessingEnabled = true;
-    pipeline.imageProcessing.contrast = touchDevice ? 1.02 : 1.10;
-    pipeline.imageProcessing.exposure = touchDevice ? 1.48 : 1.18;
+    pipeline.imageProcessing.contrast = touchDevice ? 1.02 : 1.12;
+    pipeline.imageProcessing.exposure = touchDevice ? 1.48 : 1.04;
     pipeline.imageProcessing.vignetteEnabled = true;
     pipeline.imageProcessing.vignetteWeight = 1.25;
     pipeline.imageProcessing.vignetteStretch = 0.15;
